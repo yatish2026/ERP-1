@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getTeacherClassesServer } from "@/app/actions/classes";
 import { createStudentServer } from "@/app/actions/students";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
 

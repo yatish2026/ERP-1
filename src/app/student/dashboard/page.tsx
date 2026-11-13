@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth, supabase } from "@/lib/supabase/client";
 import { getTimetableServer, DayTimetable } from "@/app/actions/timetable";
 import { getStudentAttendanceStatsServer } from "@/app/actions/attendance";
 import { getAnnouncementsServer, Announcement } from "@/app/actions/announcements";
 import { getStudentMarksServer } from "@/app/actions/marks";
-import { CalendarIcon, Clock, Loader2, LogOut, CheckCircle, FileText, Megaphone, CheckSquare, Award, User, Settings, ChevronRight } from "lucide-react";
-import { signOut } from "firebase/auth";
+import { CalendarIcon, Clock, Loader2, CheckCircle, FileText, Megaphone, CheckSquare, Award, User, Settings, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -41,13 +39,18 @@ export default function Dashboard() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setUserName(data.name || "Student");
+        const { data: userDoc } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (userDoc) {
+          setUserName(userDoc.name || "Student");
+          const classId = userDoc.class_id || userDoc.classId;
           
-          if (data.classId) {
-            const res = await getTimetableServer(data.classId);
+          if (classId) {
+            const res = await getTimetableServer(classId);
             if (res.success) {
               setTimetableMap(res.data || {});
             }

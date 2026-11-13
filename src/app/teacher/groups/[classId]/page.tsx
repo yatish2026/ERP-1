@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/supabase/client";
 import { getGroupPostsServer, createGroupPostServer, deleteGroupPostServer, GroupPost } from "@/app/actions/groups";
 import { Loader2, ArrowLeft, Send, Trash2, FileText, Calendar } from "lucide-react";
 import Link from "next/link";

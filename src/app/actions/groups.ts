@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type GroupPost = {
@@ -13,29 +13,28 @@ export type GroupPost = {
   timestamp: number;
 };
 
-// 1. Get all unique classes a teacher is involved with (either as class teacher or subject teacher)
 export async function getTeacherGroupsServer(teacherId: string) {
   try {
     const classIds = new Set<string>();
 
-    // Check Class Teacher Assignments
-    const ctAssignments = await adminDb.collection("teacher_class_assignments")
-      .where("teacherId", "==", teacherId)
-      .get();
-    ctAssignments.docs.forEach(doc => {
-      classIds.add(doc.data().classId);
+    const { data: ctAssignments } = await supabaseAdmin
+      .from("teacher_class_assignments")
+      .select("class_id")
+      .eq("teacher_id", teacherId);
+
+    (ctAssignments || []).forEach((a: any) => {
+      if (a.class_id) classIds.add(a.class_id);
     });
 
-    // Scan Timetables for subject teacher assignments
-    // Note: In a huge school, this could be slow, but it's fine for our scale. 
-    // Ideally, we'd maintain an array of `taughtClasses` on the teacher doc.
-    const timetables = await adminDb.collection("timetables").get();
-    timetables.docs.forEach(doc => {
-      const data = doc.data();
-      const periods = data.periods || [];
+    const { data: timetables } = await supabaseAdmin
+      .from("timetables")
+      .select("class_id, periods");
+
+    (timetables || []).forEach((doc: any) => {
+      const periods = doc.periods || [];
       const hasTeacher = periods.some((p: any) => p.teacherId === teacherId);
-      if (hasTeacher) {
-        classIds.add(data.classId);
+      if (hasTeacher && doc.class_id) {
+        classIds.add(doc.class_id);
       }
     });
 
@@ -46,20 +45,25 @@ export async function getTeacherGroupsServer(teacherId: string) {
   }
 }
 
-// 2. Fetch posts for a specific class group
 export async function getGroupPostsServer(classId: string) {
   try {
-    const snapshot = await adminDb.collection("class_posts")
-      .where("classId", "==", classId)
-      .get();
-      
-    const posts = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as GroupPost[];
+    const { data, error } = await supabaseAdmin
+      .from("class_posts")
+      .select("*")
+      .eq("class_id", classId)
+      .order("timestamp", { ascending: false });
 
-    // Sort in memory to avoid requiring a composite index in Firestore
-    posts.sort((a, b) => b.timestamp - a.timestamp);
+    if (error) throw error;
+      
+    const posts: GroupPost[] = (data || []).map((row: any) => ({
+      id: row.id,
+      classId: row.class_id,
+      authorId: row.author_id,
+      authorName: row.author_name,
+      title: row.title,
+      content: row.content,
+      timestamp: row.timestamp
+    }));
 
     return { success: true, data: posts };
   } catch (error: any) {
@@ -68,22 +72,36 @@ export async function getGroupPostsServer(classId: string) {
   }
 }
 
-// 3. Create a post in a class group
 export async function createGroupPostServer(teacherId: string, data: Omit<GroupPost, "id" | "timestamp">) {
   try {
-    const userDoc = await adminDb.collection("users").doc(teacherId).get();
-    if (!userDoc.exists || !["teacher", "class_teacher", "principal"].includes(userDoc.data()?.role)) {
+    const { data: userDoc } = await supabaseAdmin.from("users").select("role").eq("id", teacherId).maybeSingle();
+    if (!userDoc || !["teacher", "class_teacher", "principal"].includes(userDoc.role)) {
       return { success: false, error: "Unauthorized. Only teachers can post." };
     }
 
-    const postRef = adminDb.collection("class_posts").doc();
-    const newPost = {
-      id: postRef.id,
-      ...data,
+    const newPost: GroupPost = {
+      id: crypto.randomUUID(),
+      classId: data.classId,
+      authorId: data.authorId,
+      authorName: data.authorName,
+      title: data.title,
+      content: data.content,
       timestamp: Date.now()
     };
 
-    await postRef.set(newPost);
+    const { error: insertError } = await supabaseAdmin
+      .from("class_posts")
+      .insert({
+        id: newPost.id,
+        class_id: newPost.classId,
+        author_id: newPost.authorId,
+        author_name: newPost.authorName,
+        title: newPost.title,
+        content: newPost.content,
+        timestamp: newPost.timestamp
+      });
+
+    if (insertError) throw insertError;
 
     revalidatePath("/teacher/groups");
     revalidatePath("/student/group");
@@ -94,27 +112,26 @@ export async function createGroupPostServer(teacherId: string, data: Omit<GroupP
   }
 }
 
-// 4. Delete a post
 export async function deleteGroupPostServer(teacherId: string, postId: string) {
   try {
-    const postRef = adminDb.collection("class_posts").doc(postId);
-    const postDoc = await postRef.get();
+    const { data: postData, error: fetchError } = await supabaseAdmin
+      .from("class_posts")
+      .select("*")
+      .eq("id", postId)
+      .maybeSingle();
     
-    if (!postDoc.exists) {
+    if (fetchError || !postData) {
       return { success: false, error: "Post not found." };
     }
 
-    const postData = postDoc.data();
+    const { data: userDoc } = await supabaseAdmin.from("users").select("role").eq("id", teacherId).maybeSingle();
+    const role = userDoc?.role;
     
-    // Check if the deleter is the author or a principal
-    const userDoc = await adminDb.collection("users").doc(teacherId).get();
-    const role = userDoc.data()?.role;
-    
-    if (postData?.authorId !== teacherId && role !== "principal") {
+    if (postData.author_id !== teacherId && role !== "principal") {
       return { success: false, error: "Unauthorized to delete this post." };
     }
 
-    await postRef.delete();
+    await supabaseAdmin.from("class_posts").delete().eq("id", postId);
     revalidatePath("/teacher/groups");
     revalidatePath("/student/group");
     return { success: true };

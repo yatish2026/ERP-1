@@ -1,49 +1,44 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function assignClassTeacherServer(principalUid: string, teacherId: string, classId: string) {
   try {
-    // 1. Verify caller is Principal
-    const principalDoc = await adminDb.collection("users").doc(principalUid).get();
-    if (!principalDoc.exists || principalDoc.data()?.role !== "principal") {
+    const { data: principalDoc } = await supabaseAdmin.from("users").select("role").eq("id", principalUid).maybeSingle();
+    if (!principalDoc || principalDoc.role !== "principal") {
       return { success: false, error: "Unauthorized. Only Principals can assign Class Teachers." };
     }
 
-    // 2. Validate Target Teacher
-    const teacherDoc = await adminDb.collection("users").doc(teacherId).get();
-    if (!teacherDoc.exists) {
+    const { data: teacherDoc } = await supabaseAdmin.from("users").select("*").eq("id", teacherId).maybeSingle();
+    if (!teacherDoc) {
       return { success: false, error: "Teacher not found." };
     }
-    const teacherData = teacherDoc.data();
-    if (teacherData?.role !== "teacher" && teacherData?.role !== "class_teacher") {
+    if (teacherDoc.role !== "teacher" && teacherDoc.role !== "class_teacher") {
       return { success: false, error: "User is not a teacher." };
     }
 
-    // 3. Validate Class
-    const classDoc = await adminDb.collection("classes").doc(classId).get();
-    if (!classDoc.exists) {
+    const { data: classDoc } = await supabaseAdmin.from("classes").select("id").eq("id", classId).maybeSingle();
+    if (!classDoc) {
       return { success: false, error: "Class not found." };
     }
 
-    // 4. Create the assignment in `teacher_class_assignments`
-    const assignmentRef = adminDb.collection("teacher_class_assignments").doc();
-    const assignmentId = assignmentRef.id;
-    await assignmentRef.set({
+    const assignmentId = crypto.randomUUID();
+    const { error: assignError } = await supabaseAdmin.from("teacher_class_assignments").insert({
       id: assignmentId,
-      teacherId,
-      classId,
-      isClassTeacher: true,
-      assignedAt: Date.now(),
-      assignedBy: principalUid
+      teacher_id: teacherId,
+      class_id: classId,
+      is_class_teacher: true,
+      assigned_at: Date.now(),
+      assigned_by: principalUid
     });
 
-    // 5. Upgrade the teacher's role to "class_teacher" if they were just a regular "teacher"
-    if (teacherData?.role === "teacher") {
-      await adminDb.collection("users").doc(teacherId).update({
+    if (assignError) throw assignError;
+
+    if (teacherDoc.role === "teacher") {
+      await supabaseAdmin.from("users").update({
         role: "class_teacher"
-      });
+      }).eq("id", teacherId);
     }
 
     revalidatePath("/principal/classes");

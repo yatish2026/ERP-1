@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function markAttendanceServer(
@@ -13,45 +13,46 @@ export async function markAttendanceServer(
   attendanceMap: Record<string, string>
 ) {
   try {
-    // 1. Verify that the actingUid is assigned to this period in the timetable for this day
-    const timetableDoc = await adminDb.collection("timetables").doc(`${classId}_${dayOfWeek}`).get();
+    const { data: timetableDoc } = await supabaseAdmin
+      .from("timetables")
+      .select("periods")
+      .eq("id", `${classId}_${dayOfWeek}`)
+      .maybeSingle();
     
     let isAuthorized = false;
-    
-    if (timetableDoc.exists) {
-      const data = timetableDoc.data();
-      const period = data?.periods?.find((p: any) => p.periodNumber === periodNumber);
+    if (timetableDoc) {
+      const periods = timetableDoc.periods || [];
+      const period = periods.find((p: any) => p.periodNumber === periodNumber);
       if (period && period.teacherId === actingUid) {
         isAuthorized = true;
       }
     }
 
     if (!isAuthorized) {
-      // Principal fallback check
-      const userDoc = await adminDb.collection("users").doc(actingUid).get();
-      if (!userDoc.exists || userDoc.data()?.role !== "principal") {
+      const { data: userDoc } = await supabaseAdmin.from("users").select("role").eq("id", actingUid).maybeSingle();
+      if (!userDoc || userDoc.role !== "principal") {
         return { success: false, error: "Unauthorized. You are not assigned to this period." };
       }
     }
 
-    const batch = adminDb.batch();
+    const rows = Object.entries(attendanceMap).map(([studentId, status]) => ({
+      id: `${classId}_${date}_p${periodNumber}_${studentId}`,
+      class_id: classId,
+      date,
+      period_number: periodNumber,
+      subject_name: subjectName,
+      student_id: studentId,
+      status,
+      marked_by: actingUid,
+      timestamp: Date.now()
+    }));
 
-    for (const [studentId, status] of Object.entries(attendanceMap)) {
-      const docId = `${classId}_${date}_p${periodNumber}_${studentId}`;
-      const docRef = adminDb.collection("attendance_records").doc(docId);
-      batch.set(docRef, {
-        classId,
-        date,
-        periodNumber,
-        subjectName,
-        studentId,
-        status,
-        markedBy: actingUid,
-        timestamp: Date.now()
-      });
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabaseAdmin
+        .from("attendance_records")
+        .upsert(rows);
+      if (upsertError) throw upsertError;
     }
-
-    await batch.commit();
 
     revalidatePath("/teacher/attendance");
     return { success: true };
@@ -62,24 +63,23 @@ export async function markAttendanceServer(
 }
 
 export async function getSchoolAttendanceStatsServer() {
-  // For the dashboard metric, in a real large-scale app we would run a scheduled Cloud Function
-  // to aggregate this nightly. For now, we return a mock high-level metric.
   return { success: true, percentage: 94 };
 }
 
-
 export async function getAttendanceByPeriodServer(classId: string, date: string, periodNumber: number) {
   try {
-    const snapshot = await adminDb.collection("attendance_records")
-      .where("classId", "==", classId)
-      .where("date", "==", date)
-      .where("periodNumber", "==", periodNumber)
-      .get();
+    const { data, error } = await supabaseAdmin
+      .from("attendance_records")
+      .select("student_id, status")
+      .eq("class_id", classId)
+      .eq("date", date)
+      .eq("period_number", periodNumber);
+
+    if (error) throw error;
       
     const records: Record<string, string> = {};
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
-      records[data.studentId] = data.status;
+    (data || []).forEach((row: any) => {
+      records[row.student_id] = row.status;
     });
 
     return { success: true, data: records };
@@ -91,17 +91,27 @@ export async function getAttendanceByPeriodServer(classId: string, date: string,
 
 export async function getClassAttendanceServer(classId: string, date: string) {
   try {
-    const snapshot = await adminDb.collection("attendance_records")
-      .where("classId", "==", classId)
-      .where("date", "==", date)
-      .get();
-      
-    const records: any[] = [];
-    snapshot.docs.forEach(doc => {
-      records.push(doc.data());
-    });
+    const { data, error } = await supabaseAdmin
+      .from("attendance_records")
+      .select("*")
+      .eq("class_id", classId)
+      .eq("date", date);
 
-    return { success: true, data: records };
+    if (error) throw error;
+
+    return { 
+      success: true, 
+      data: (data || []).map((row: any) => ({
+        classId: row.class_id,
+        date: row.date,
+        periodNumber: row.period_number,
+        subjectName: row.subject_name,
+        studentId: row.student_id,
+        status: row.status,
+        markedBy: row.marked_by,
+        timestamp: row.timestamp
+      }))
+    };
   } catch (error: any) {
     console.error("Error fetching class attendance:", error);
     return { success: false, error: "Failed to fetch class attendance." };
@@ -110,17 +120,27 @@ export async function getClassAttendanceServer(classId: string, date: string) {
 
 export async function getStudentDetailedAttendanceServer(studentId: string) {
   try {
-    const snapshot = await adminDb.collection("attendance_records")
-      .where("studentId", "==", studentId)
-      .orderBy("timestamp", "desc")
-      .get();
-      
-    const records: any[] = [];
-    snapshot.docs.forEach(doc => {
-      records.push(doc.data());
-    });
+    const { data, error } = await supabaseAdmin
+      .from("attendance_records")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("timestamp", { ascending: false });
 
-    return { success: true, data: records };
+    if (error) throw error;
+
+    return { 
+      success: true, 
+      data: (data || []).map((row: any) => ({
+        classId: row.class_id,
+        date: row.date,
+        periodNumber: row.period_number,
+        subjectName: row.subject_name,
+        studentId: row.student_id,
+        status: row.status,
+        markedBy: row.marked_by,
+        timestamp: row.timestamp
+      }))
+    };
   } catch (error: any) {
     console.error("Error fetching detailed attendance:", error);
     return { success: false, error: "Failed to fetch detailed attendance." };
@@ -129,17 +149,19 @@ export async function getStudentDetailedAttendanceServer(studentId: string) {
 
 export async function getStudentAttendanceStatsServer(studentId: string) {
   try {
-    const snapshot = await adminDb.collection("attendance_records")
-      .where("studentId", "==", studentId)
-      .get();
+    const { data, error } = await supabaseAdmin
+      .from("attendance_records")
+      .select("status")
+      .eq("student_id", studentId);
+
+    if (error) throw error;
       
     let totalPeriods = 0;
     let presentPeriods = 0;
 
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
+    (data || []).forEach((row: any) => {
       totalPeriods++;
-      if (data.status === "Present" || data.status === "Late") {
+      if (row.status === "Present" || row.status === "Late") {
         presentPeriods++;
       }
     });
@@ -156,16 +178,18 @@ export async function getStudentAttendanceStatsServer(studentId: string) {
 
 export async function getOverallDailyAttendanceServer(date: string) {
   try {
-    const snapshot = await adminDb.collection("attendance_records")
-      .where("date", "==", date)
-      .get();
+    const { data, error } = await supabaseAdmin
+      .from("attendance_records")
+      .select("status")
+      .eq("date", date);
+
+    if (error) throw error;
       
     let total = 0;
     let present = 0;
-    snapshot.docs.forEach(doc => {
-      const status = doc.data().status;
+    (data || []).forEach((row: any) => {
       total++;
-      if (status === "Present" || status === "Late") present++;
+      if (row.status === "Present" || row.status === "Late") present++;
     });
 
     if (total === 0) return { success: true, percentage: "N/A" };

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/lib/supabase/client";
 import { getStudentMarksServer } from "@/app/actions/marks";
-import { FileText, Loader2, Award } from "lucide-react";
+import { FileText, Loader2, Award, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 export default function StudentGradesPage() {
   const [loading, setLoading] = useState(true);
@@ -53,14 +53,51 @@ export default function StudentGradesPage() {
   
   const overallPercentage = totalMaxMarks > 0 ? Math.round((totalMarksObtained / totalMaxMarks) * 100) : 0;
 
+  const handleDownloadTranscript = () => {
+    const headers = ["Examination", "Subject Name", "Marks Obtained", "Maximum Marks", "Percentage", "Grade"];
+    const rows = currentExamMarks.map(m => {
+      const pct = m.totalMarks > 0 ? Math.round((m.marksObtained / m.totalMarks) * 100) : 0;
+      let grade = "F";
+      if (pct >= 90) grade = "O (Outstanding)";
+      else if (pct >= 80) grade = "A+ (Excellent)";
+      else if (pct >= 70) grade = "A (Very Good)";
+      else if (pct >= 60) grade = "B+ (Good)";
+      else if (pct >= 50) grade = "B (Above Average)";
+      else if (pct >= 40) grade = "C (Pass)";
+
+      return [
+        m.examName,
+        m.subjectName,
+        m.marksObtained,
+        m.totalMarks,
+        `${pct}%`,
+        grade
+      ];
+    });
+
+    // Add summary row
+    rows.push(["TOTAL / AGGREGATE", "All Subjects", totalMarksObtained, totalMaxMarks, `${overallPercentage}%`, ""]);
+    exportToCsv(`GradeCard_${selectedExam}`, headers, rows);
+  };
+
   return (
     <div className="p-8 max-w-5xl mx-auto">
-      <header className="mb-8 border-b pb-4">
-        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <FileText className="text-blue-500 w-8 h-8" /> 
-          My Grades & Performance
-        </h2>
-        <p className="text-gray-600 mt-2">View your academic performance across all examinations.</p>
+      <header className="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="text-blue-500 w-8 h-8" /> 
+            My Grades & Performance
+          </h2>
+          <p className="text-gray-600 mt-2">View and download your academic performance and semester transcripts.</p>
+        </div>
+        {currentExamMarks.length > 0 && (
+          <button
+            onClick={handleDownloadTranscript}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+          >
+            <Download className="w-4 h-4" /> Download Grade Card CSV
+          </button>
+        )}
       </header>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">

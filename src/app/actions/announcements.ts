@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type Announcement = {
@@ -21,21 +21,32 @@ export async function createAnnouncementServer(
   data: { title: string; content: string; targetAudience: "all" | "teachers" | "students" }
 ) {
   try {
-    const docRef = adminDb.collection("announcements").doc();
+    const id = crypto.randomUUID();
+    const timestamp = Date.now();
     const announcement: Announcement = {
-      id: docRef.id,
+      id,
       title: data.title,
       content: data.content,
       authorId,
       authorName,
       authorRole,
-      timestamp: Date.now(),
+      timestamp,
       targetAudience: data.targetAudience
     };
     
-    await docRef.set(announcement);
+    const { error } = await supabaseAdmin.from("announcements").insert({
+      id,
+      title: data.title,
+      content: data.content,
+      author_id: authorId,
+      author_name: authorName,
+      author_role: authorRole,
+      target_audience: data.targetAudience,
+      timestamp
+    });
+
+    if (error) throw error;
     
-    // Revalidate multiple paths where announcements might be shown
     revalidatePath("/principal/dashboard");
     revalidatePath("/teacher/dashboard");
     revalidatePath("/student/dashboard");
@@ -52,20 +63,27 @@ export async function createAnnouncementServer(
 
 export async function getAnnouncementsServer(role: string) {
   try {
-    let query: any = adminDb.collection("announcements").orderBy("timestamp", "desc");
+    const { data, error } = await supabaseAdmin
+      .from("announcements")
+      .select("*")
+      .order("timestamp", { ascending: false });
+
+    if (error) throw error;
     
-    const snapshot = await query.get();
-    
-    // Filter in memory for role access
-    // Principal sees all
-    // Teachers see 'all' and 'teachers'
-    // Students see 'all' and 'students'
-    const allDocs = snapshot.docs.map((doc: any) => doc.data() as Announcement);
+    const allDocs: Announcement[] = (data || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      authorId: row.author_id,
+      authorName: row.author_name,
+      authorRole: row.author_role,
+      targetAudience: row.target_audience,
+      timestamp: row.timestamp
+    }));
     
     let filtered = allDocs;
     if (role === "teacher" || role === "class_teacher") {
-      filtered = allDocs.filter((a: Announcement) => a.targetAudience === "all" || a.targetAudience === "teachers" || a.authorId === "teacher"); 
-      // wait, authorId check isn't strictly needed for reading, they see what they are meant to see.
+      filtered = allDocs.filter((a: Announcement) => a.targetAudience === "all" || a.targetAudience === "teachers"); 
     } else if (role === "student") {
       filtered = allDocs.filter((a: Announcement) => a.targetAudience === "all" || a.targetAudience === "students");
     }
@@ -79,21 +97,26 @@ export async function getAnnouncementsServer(role: string) {
 
 export async function deleteAnnouncementServer(uid: string, announcementId: string, role: string) {
   try {
-    const docRef = adminDb.collection("announcements").doc(announcementId);
-    const doc = await docRef.get();
+    const { data: doc, error: fetchError } = await supabaseAdmin
+      .from("announcements")
+      .select("*")
+      .eq("id", announcementId)
+      .maybeSingle();
     
-    if (!doc.exists) {
+    if (fetchError || !doc) {
       return { success: false, error: "Announcement not found" };
     }
     
-    const data = doc.data() as Announcement;
-    
-    // Only principals can delete any announcement, teachers can only delete their own
-    if (role !== "principal" && data.authorId !== uid) {
+    if (role !== "principal" && doc.author_id !== uid) {
       return { success: false, error: "Unauthorized to delete this announcement" };
     }
     
-    await docRef.delete();
+    const { error: deleteError } = await supabaseAdmin
+      .from("announcements")
+      .delete()
+      .eq("id", announcementId);
+
+    if (deleteError) throw deleteError;
     
     revalidatePath("/principal/dashboard");
     revalidatePath("/teacher/dashboard");

@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type Subject = {
@@ -12,15 +12,24 @@ export type Subject = {
 
 export async function createSubjectServer(name: string, classId: string) {
   try {
-    const docRef = adminDb.collection("subjects").doc();
+    const id = crypto.randomUUID();
+    const createdAt = Date.now();
     const subject: Subject = {
-      id: docRef.id,
+      id,
       name,
       classId,
-      createdAt: Date.now()
+      createdAt
     };
     
-    await docRef.set(subject);
+    const { error } = await supabaseAdmin.from("subjects").insert({
+      id,
+      name,
+      class_id: classId,
+      created_at: createdAt
+    });
+
+    if (error) throw error;
+
     revalidatePath("/principal/subjects");
     return { success: true, data: subject };
   } catch (error: any) {
@@ -31,8 +40,20 @@ export async function createSubjectServer(name: string, classId: string) {
 
 export async function getSubjectsServer() {
   try {
-    const snapshot = await adminDb.collection("subjects").orderBy("createdAt", "desc").get();
-    const subjects = snapshot.docs.map(doc => doc.data() as Subject);
+    const { data, error } = await supabaseAdmin
+      .from("subjects")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    
+    const subjects: Subject[] = (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      classId: row.class_id,
+      createdAt: row.created_at
+    }));
+
     return { success: true, data: subjects };
   } catch (error: any) {
     console.error("Error fetching subjects:", error);
@@ -42,11 +63,8 @@ export async function getSubjectsServer() {
 
 export async function deleteSubjectServer(id: string) {
   try {
-    await adminDb.collection("subjects").doc(id).delete();
-    
-    // Also remove this subject from any teacher's assigned subjects array
-    // We will handle this cleanup when saving teachers, or let it just be invalid references.
-    // For now, simple delete is fine.
+    const { error } = await supabaseAdmin.from("subjects").delete().eq("id", id);
+    if (error) throw error;
     
     revalidatePath("/principal/subjects");
     return { success: true };

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/lib/supabase/client";
 import { getStudentsServer } from "@/app/actions/students";
 import { getTeachersServer } from "@/app/actions/users";
 import { getClassesServer } from "@/app/actions/classes";
@@ -10,7 +9,6 @@ import { getAnnouncementsServer, Announcement } from "@/app/actions/announcement
 import { getOverallDailyAttendanceServer } from "@/app/actions/attendance";
 import { getSchoolFeesStatsServer } from "@/app/actions/fees";
 import { Loader2, ChevronRight, Users, UserSquare2, Megaphone, Calendar as TimetableIcon, Settings, GraduationCap, CheckCircle, IndianRupee } from "lucide-react";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -87,7 +85,7 @@ export default function PrincipalDashboard() {
           </div>
 
           <Link href="/principal/timetable" className="flex items-center justify-between w-full py-4 border-t border-gray-50 group hover:bg-gray-50 transition-colors -mx-6 px-6 -mb-6">
-            <span className="font-bold text-gray-900">View School Timetables</span>
+            <span className="font-bold text-gray-900">View College Timetables</span>
             <ChevronRight className="text-blue-600 w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -96,8 +94,8 @@ export default function PrincipalDashboard() {
         <h3 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase ml-2">Metrics</h3>
         <div className="grid grid-cols-2 gap-4 mb-8">
           
-          {/* Attendance - Green Box (Not a link, just a display) */}
-          <div className="bg-[#e6f4ea] rounded-3xl p-5 flex flex-col justify-between aspect-square shadow-sm">
+          {/* Attendance - Green Box */}
+          <Link href="/principal/attendance" className="bg-[#e6f4ea] rounded-3xl p-5 flex flex-col justify-between aspect-square shadow-sm hover:shadow-md transition-shadow">
             <div>
               <div className="bg-[#81c995] w-10 h-10 rounded-xl flex items-center justify-center mb-3">
                 <CheckCircle className="text-white w-5 h-5" />
@@ -107,13 +105,15 @@ export default function PrincipalDashboard() {
             <div>
               <p className="text-xs text-gray-600 mb-1">Today's Avg</p>
               <div className="flex justify-between items-end">
-                <span className="text-xl font-bold text-gray-900">{attendancePercentage}%</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {attendancePercentage.endsWith('%') ? attendancePercentage : `${attendancePercentage}%`}
+                </span>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Fees - Yellow Box */}
-          <div className="bg-[#fff9e6] rounded-3xl p-5 flex flex-col justify-between aspect-square shadow-sm">
+          <Link href="/principal/fees" className="bg-[#fff9e6] rounded-3xl p-5 flex flex-col justify-between aspect-square shadow-sm hover:shadow-md transition-shadow">
             <div>
               <div className="bg-[#ffcc00] w-10 h-10 rounded-xl flex items-center justify-center mb-3">
                 <IndianRupee className="text-white w-5 h-5" />
@@ -126,10 +126,10 @@ export default function PrincipalDashboard() {
                 <span className="text-xl font-bold text-gray-900">₹{totalFees.toLocaleString()}</span>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Students - Blue Box */}
-          <Link href="/principal/students" className="bg-[#e4f7fb] rounded-3xl p-5 flex flex-col justify-between aspect-[16/10] shadow-sm">
+          <Link href="/principal/students" className="bg-[#e4f7fb] rounded-3xl p-5 flex flex-col justify-between aspect-[16/10] shadow-sm hover:shadow-md transition-shadow">
             <div className="bg-[#78d9ec] w-10 h-10 rounded-xl flex items-center justify-center mb-2">
               <Users className="text-white w-5 h-5" />
             </div>
@@ -138,11 +138,11 @@ export default function PrincipalDashboard() {
           </Link>
           
           {/* Teachers - Red Box */}
-          <Link href="/principal/teachers" className="bg-[#fce8e6] rounded-3xl p-5 flex flex-col justify-between aspect-[16/10] shadow-sm">
+          <Link href="/principal/teachers" className="bg-[#fce8e6] rounded-3xl p-5 flex flex-col justify-between aspect-[16/10] shadow-sm hover:shadow-md transition-shadow">
             <div className="bg-[#f28b82] w-10 h-10 rounded-xl flex items-center justify-center mb-2">
               <UserSquare2 className="text-white w-5 h-5" />
             </div>
-            <h4 className="font-semibold text-gray-900">Teachers</h4>
+            <h4 className="font-semibold text-gray-900">Faculty & Staff</h4>
             <p className="text-xs text-gray-500">{teachersCount} Active Staff</p>
           </Link>
         </div>
@@ -150,14 +150,14 @@ export default function PrincipalDashboard() {
         {/* 3. Tools */}
         <h3 className="text-xs font-bold text-gray-500 tracking-wider mb-4 uppercase ml-2">Tools</h3>
         <div className="grid grid-cols-2 gap-4">
-          <Link href="/principal/classes" className="bg-white rounded-3xl p-6 flex flex-col items-center justify-center gap-3 shadow-sm border border-gray-100">
+          <Link href="/principal/classes" className="bg-white rounded-3xl p-6 flex flex-col items-center justify-center gap-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="bg-purple-100 p-3 rounded-2xl">
               <GraduationCap className="text-purple-600 w-6 h-6" />
             </div>
             <span className="font-bold text-gray-900 text-sm">Classes ({classesCount})</span>
           </Link>
           
-          <Link href="/principal/profile" className="bg-white rounded-3xl p-6 flex flex-col items-center justify-center gap-3 shadow-sm border border-gray-100">
+          <Link href="/principal/profile" className="bg-white rounded-3xl p-6 flex flex-col items-center justify-center gap-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="bg-pink-100 p-3 rounded-2xl">
               <Settings className="text-pink-600 w-6 h-6" />
             </div>
@@ -169,33 +169,35 @@ export default function PrincipalDashboard() {
       {/* ---------------- DESKTOP VIEW (DETAILED DASHBOARD) ---------------- */}
       <div className="hidden md:block">
         <header className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Welcome, Principal!</h2>
-          <p className="text-gray-600 mt-2">Here is the school's high-level overview.</p>
+          <h2 className="text-3xl font-bold text-gray-900">Welcome, Principal / Dean!</h2>
+          <p className="text-gray-600 mt-2">Here is the college's high-level overview.</p>
         </header>
         
         {/* Metric Overviews (5 columns) */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          {/* Attendance (No Link) */}
-          <div className="bg-[#e6f4ea] p-6 rounded-2xl shadow-sm border border-[#cce8d6] flex flex-col items-center justify-center gap-4 hover:shadow-md transition-shadow">
-            <div className="bg-[#81c995] p-3 rounded-xl text-white">
+          {/* Attendance */}
+          <Link href="/principal/attendance" className="bg-[#e6f4ea] p-6 rounded-2xl shadow-sm border border-[#cce8d6] flex flex-col items-center justify-center gap-4 hover:shadow-md transition-shadow cursor-pointer group">
+            <div className="bg-[#81c995] p-3 rounded-xl text-white group-hover:scale-105 transition-transform">
               <CheckCircle className="w-6 h-6" />
             </div>
             <div className="text-center">
               <p className="text-xs text-gray-700 font-medium">Daily Attendance</p>
-              <h3 className="text-xl font-bold text-gray-900 mt-1">{attendancePercentage}%</h3>
+              <h3 className="text-xl font-bold text-gray-900 mt-1">
+                {attendancePercentage.endsWith('%') ? attendancePercentage : `${attendancePercentage}%`}
+              </h3>
             </div>
-          </div>
+          </Link>
           
-          {/* Fees (No Link) */}
-          <div className="bg-[#fff9e6] p-6 rounded-2xl shadow-sm border border-[#ffe680] flex flex-col items-center justify-center gap-4 hover:shadow-md transition-shadow">
-            <div className="bg-[#ffcc00] p-3 rounded-xl text-white">
+          {/* Fees */}
+          <Link href="/principal/fees" className="bg-[#fff9e6] p-6 rounded-2xl shadow-sm border border-[#ffe680] flex flex-col items-center justify-center gap-4 hover:shadow-md transition-shadow cursor-pointer group">
+            <div className="bg-[#ffcc00] p-3 rounded-xl text-white group-hover:scale-105 transition-transform">
               <IndianRupee className="w-6 h-6" />
             </div>
             <div className="text-center">
               <p className="text-xs text-gray-700 font-medium">Fees Collected</p>
               <h3 className="text-xl font-bold text-gray-900 mt-1">₹{totalFees.toLocaleString()}</h3>
             </div>
-          </div>
+          </Link>
 
           <Link href="/principal/students" className="bg-[#e4f7fb] p-6 rounded-2xl shadow-sm border border-[#b3ebf5] flex flex-col items-center justify-center gap-4 hover:shadow-md transition-shadow">
             <div className="bg-[#78d9ec] p-3 rounded-xl text-white">

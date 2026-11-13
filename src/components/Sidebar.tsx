@@ -21,8 +21,7 @@ import {
   X,
   User
 } from "lucide-react";
-import { auth } from "@/lib/firebase/config";
-import { signOut } from "firebase/auth";
+import { supabase } from "@/lib/supabase/client";
 
 const principalNavItems = [
   { name: "Dashboard", href: "/principal/dashboard", icon: LayoutDashboard },
@@ -67,7 +66,8 @@ export default function Sidebar({ role }: { role: "principal" | "teacher" | "stu
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
+    window.location.href = "/login";
   };
 
   let navItems = principalNavItems;
@@ -83,7 +83,7 @@ export default function Sidebar({ role }: { role: "principal" | "teacher" | "stu
       <div className="hidden md:flex flex-col w-64 bg-gray-900 h-screen text-white fixed left-0 top-0 z-50">
         <div className="flex items-center justify-center h-20 border-b border-gray-800 shrink-0">
           <h1 className="text-xl font-bold flex items-center gap-2">
-            <GraduationCap className="text-blue-500" /> School ERP
+            <GraduationCap className="text-blue-500" /> College ERP
           </h1>
         </div>
         
@@ -112,7 +112,7 @@ export default function Sidebar({ role }: { role: "principal" | "teacher" | "stu
         <div className="p-4 border-t border-gray-800 shrink-0">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+            className="flex w-full items-center px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
           >
             <LogOut className="mr-3 h-5 w-5 text-gray-400" />
             Logout
@@ -123,7 +123,7 @@ export default function Sidebar({ role }: { role: "principal" | "teacher" | "stu
       {/* 2. MOBILE HEADER */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-center z-40 px-4 shadow-sm">
         <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <GraduationCap className="text-blue-600 w-6 h-6" /> School ERP
+          <GraduationCap className="text-blue-600 w-6 h-6" /> College ERP
         </h1>
       </div>
 
@@ -195,7 +195,7 @@ export default function Sidebar({ role }: { role: "principal" | "teacher" | "stu
             <div className="mt-8 border-t border-gray-100 pt-4">
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center px-4 py-3.5 text-sm font-medium text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                className="flex w-full items-center px-4 py-3.5 text-sm font-medium text-red-600 rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
               >
                 <div className="mr-4 p-2 rounded-lg bg-red-100 text-red-600">
                   <LogOut className="h-5 w-5" />

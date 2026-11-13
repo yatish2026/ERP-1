@@ -1,36 +1,34 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function createClassServer(grade: string, section: string, principalUid: string) {
   try {
-    // 1. Verify caller is Principal
-    const userDoc = await adminDb.collection("users").doc(principalUid).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "principal") {
+    const { data: userDoc } = await supabaseAdmin.from("users").select("role").eq("id", principalUid).maybeSingle();
+    if (!userDoc || userDoc.role !== "principal") {
       return { success: false, error: "Unauthorized. Only Principals can create classes." };
     }
 
-    // 2. Validate input
     if (!grade || !section) {
       return { success: false, error: "Grade and Section are required." };
     }
 
     const classId = `${grade.toLowerCase()}-${section.toLowerCase()}`;
 
-    // 3. Check if class already exists
-    const classDoc = await adminDb.collection("classes").doc(classId).get();
-    if (classDoc.exists) {
+    const { data: existingClass } = await supabaseAdmin.from("classes").select("id").eq("id", classId).maybeSingle();
+    if (existingClass) {
       return { success: false, error: `Class ${grade}-${section} already exists.` };
     }
 
-    // 4. Create class
-    await adminDb.collection("classes").doc(classId).set({
+    const { error: insertError } = await supabaseAdmin.from("classes").insert({
       id: classId,
       grade,
       section,
-      createdAt: Date.now(),
+      created_at: Date.now(),
     });
+
+    if (insertError) throw insertError;
 
     revalidatePath("/principal/classes");
     return { success: true };
@@ -42,37 +40,52 @@ export async function createClassServer(grade: string, section: string, principa
 
 export async function getClassesServer() {
   try {
-    const snapshot = await adminDb.collection("classes").orderBy("grade").get();
+    const { data, error } = await supabaseAdmin.from("classes").select("*").order("grade", { ascending: true });
+    if (error) throw error;
     return { 
       success: true, 
-      data: snapshot.docs.map(doc => doc.data())
+      data: (data || []).map((c: any) => ({
+        id: c.id,
+        grade: c.grade,
+        section: c.section,
+        createdAt: c.created_at
+      }))
     };
-  } catch (error) {
+  } catch (error: any) {
     return { success: false, error: "Failed to fetch classes" };
   }
 }
 
 export async function getTeacherClassesServer(teacherUid: string) {
   try {
-    const assignments = await adminDb.collection("teacher_class_assignments")
-      .where("teacherId", "==", teacherUid)
-      .where("isClassTeacher", "==", true)
-      .get();
+    const { data: assignments, error } = await supabaseAdmin
+      .from("teacher_class_assignments")
+      .select("class_id")
+      .eq("teacher_id", teacherUid)
+      .eq("is_class_teacher", true);
       
-    const classIds = assignments.docs.map(doc => doc.data().classId);
+    if (error) throw error;
+    const classIds = (assignments || []).map((a: any) => a.class_id);
     
     if (classIds.length === 0) return { success: true, data: [] };
 
-    // Fetch class details
-    const classDocs = await Promise.all(
-      classIds.map(id => adminDb.collection("classes").doc(id).get())
-    );
+    const { data: classDocs, error: classError } = await supabaseAdmin
+      .from("classes")
+      .select("*")
+      .in("id", classIds);
+
+    if (classError) throw classError;
 
     return {
       success: true,
-      data: classDocs.filter(d => d.exists).map(d => d.data())
+      data: (classDocs || []).map((c: any) => ({
+        id: c.id,
+        grade: c.grade,
+        section: c.section,
+        createdAt: c.created_at
+      }))
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching teacher classes:", error);
     return { success: false, error: "Failed to fetch assigned classes" };
   }

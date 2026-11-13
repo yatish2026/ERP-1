@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { supabase, auth } from "@/lib/supabase/client";
 import { Loader2, User, Lock, Save, CheckCircle, AlertCircle, Settings } from "lucide-react";
 
 export default function ProfileComponent() {
@@ -11,11 +9,11 @@ export default function ProfileComponent() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   
+  const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   
@@ -25,15 +23,21 @@ export default function ProfileComponent() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
+        setUserId(user.id);
         setEmail(user.email || "");
         setName(user.displayName || "");
         
         try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists()) {
-            setRole(userDoc.data().role || "User");
-            if (!user.displayName) {
-              setName(userDoc.data().name || "");
+          const { data: userDoc } = await supabase
+            .from("users")
+            .select("*")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (userDoc) {
+            setRole(userDoc.role || "User");
+            if (!user.displayName && userDoc.name) {
+              setName(userDoc.name);
             }
           }
         } catch (e) {
@@ -52,14 +56,19 @@ export default function ProfileComponent() {
     setProfileMsg({ type: "", text: "" });
 
     try {
-      if (auth.currentUser) {
-        // Update Auth Profile
-        await updateProfile(auth.currentUser, { displayName: name });
-        
-        // Update Firestore Doc
-        await updateDoc(doc(db, "users", auth.currentUser.uid), {
-          name: name
+      if (userId) {
+        // Update Supabase Auth User Metadata
+        await supabase.auth.updateUser({
+          data: { name: name }
         });
+        
+        // Update Supabase Users Table
+        const { error } = await supabase
+          .from("users")
+          .update({ name: name })
+          .eq("id", userId);
+
+        if (error) throw error;
         
         setProfileMsg({ type: "success", text: "Profile updated successfully!" });
       }
@@ -88,26 +97,18 @@ export default function ProfileComponent() {
     }
 
     try {
-      if (auth.currentUser && auth.currentUser.email) {
-        // Re-authenticate first to ensure security
-        const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
-        await reauthenticateWithCredential(auth.currentUser, credential);
-        
-        // Then update password
-        await updatePassword(auth.currentUser, newPassword);
-        
-        setPasswordMsg({ type: "success", text: "Password updated successfully!" });
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      }
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+      
+      setPasswordMsg({ type: "success", text: "Password updated successfully!" });
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error: any) {
       console.error(error);
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-        setPasswordMsg({ type: "error", text: "Incorrect current password." });
-      } else {
-        setPasswordMsg({ type: "error", text: error.message || "Failed to update password." });
-      }
+      setPasswordMsg({ type: "error", text: error.message || "Failed to update password." });
     } finally {
       setSavingPassword(false);
     }
@@ -165,7 +166,7 @@ export default function ProfileComponent() {
                 className="w-full border border-gray-200 rounded-xl p-3 bg-gray-100 text-gray-500 cursor-not-allowed"
                 disabled
               />
-              <p className="text-xs text-gray-400 mt-1">Email cannot be changed.</p>
+              <p className="text-xs text-gray-400 mt-1">Email cannot be changed directly.</p>
             </div>
 
             <div>
@@ -181,7 +182,7 @@ export default function ProfileComponent() {
             <button
               type="submit"
               disabled={savingProfile}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
             >
               {savingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {savingProfile ? "Saving..." : "Save Changes"}
@@ -207,23 +208,13 @@ export default function ProfileComponent() {
 
           <form onSubmit={handleUpdatePassword} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-colors"
-                required
-              />
-            </div>
-            
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-colors"
+                placeholder="At least 6 characters"
                 required
               />
             </div>
@@ -235,6 +226,7 @@ export default function ProfileComponent() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-xl p-3 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none transition-colors"
+                placeholder="Re-enter new password"
                 required
               />
             </div>
@@ -242,7 +234,7 @@ export default function ProfileComponent() {
             <button
               type="submit"
               disabled={savingPassword}
-              className="w-full mt-4 bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full mt-4 bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
             >
               {savingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
               {savingPassword ? "Updating..." : "Update Password"}

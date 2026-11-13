@@ -1,20 +1,28 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function getUserRoleServer(uid: string) {
   try {
-    const userDoc = await adminDb.collection("users").doc(uid).get();
+    const { data: userDoc, error } = await supabaseAdmin
+      .from("users")
+      .select("*")
+      .eq("id", uid)
+      .maybeSingle();
     
-    if (userDoc.exists) {
-      const data = userDoc.data();
+    if (error) {
+      console.error("Server Action Error fetching role:", error);
+      return { success: false, error: error.message };
+    }
+
+    if (userDoc) {
       return { 
         success: true, 
         data: {
-          role: data?.role,
-          name: data?.name,
-          email: data?.email,
-          createdAt: data?.createdAt?.toMillis ? data.createdAt.toMillis() : null
+          role: userDoc.role,
+          name: userDoc.name,
+          email: userDoc.email,
+          createdAt: userDoc.created_at
         } 
       };
     } else {

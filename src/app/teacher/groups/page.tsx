@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/supabase/client";
 import { getTeacherGroupsServer } from "@/app/actions/groups";
 import { Loader2, Users, ChevronRight, BookOpen } from "lucide-react";
 import Link from "next/link";

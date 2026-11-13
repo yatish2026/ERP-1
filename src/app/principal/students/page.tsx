@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { getStudentsServer, createStudentServer } from "@/app/actions/students";
 import { getClassesServer } from "@/app/actions/classes";
 import { deleteUserServer, updateUserServer } from "@/app/actions/users";
-import { auth } from "@/lib/firebase/config";
-import { UserPlus, Users, Loader2, Trash2, Edit2, X, Save } from "lucide-react";
+import { auth } from "@/lib/supabase/client";
+import { UserPlus, Users, Loader2, Trash2, Edit2, X, Save, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -135,11 +136,36 @@ export default function StudentsPage() {
     return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600 w-8 h-8" /></div>;
   }
 
+  const handleDownloadStudents = () => {
+    const headers = ["Admission No", "Roll No", "Full Name", "Email", "Class", "Gender", "Date of Birth", "Parent Name", "Parent Phone"];
+    const rows = filteredStudents.map(s => [
+      s.admissionNumber || "",
+      s.rollNumber || "",
+      s.name || "",
+      s.email || "",
+      s.classId || "",
+      s.gender || "",
+      s.dateOfBirth || "",
+      s.parentName || "",
+      s.parentPhone || ""
+    ]);
+    const filename = filterClassId ? `Students_${filterClassId}` : "All_Students_Directory";
+    exportToCsv(filename, headers, rows);
+  };
+
   return (
     <div className="p-8">
-      <header className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Manage Students</h2>
-        <p className="text-gray-600 mt-2">Create and view all students across all classes.</p>
+      <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Manage Students</h2>
+          <p className="text-gray-600 mt-2">Create, view, and export student records across all classes.</p>
+        </div>
+        <button
+          onClick={handleDownloadStudents}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+        >
+          <Download className="w-4 h-4" /> Export CSV ({filteredStudents.length})
+        </button>
       </header>
 
       {error && <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>}
@@ -223,16 +249,24 @@ export default function StudentsPage() {
           <h3 className="text-xl font-semibold flex items-center gap-2">
             <Users className="text-green-500" /> All Students
           </h3>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-600">Filter by Class:</label>
-            <select 
-              value={filterClassId} 
-              onChange={e => setFilterClassId(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600">Filter by Class:</label>
+              <select 
+                value={filterClassId} 
+                onChange={e => setFilterClassId(e.target.value)}
+                className="border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="">All Classes</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.grade} - {c.section}</option>)}
+              </select>
+            </div>
+            <button
+              onClick={handleDownloadStudents}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold border border-gray-200 transition-colors"
             >
-              <option value="">All Classes</option>
-              {classes.map(c => <option key={c.id} value={c.id}>{c.grade} - {c.section}</option>)}
-            </select>
+              <Download className="w-3.5 h-3.5" /> CSV
+            </button>
           </div>
         </div>
         {filteredStudents.length === 0 ? (

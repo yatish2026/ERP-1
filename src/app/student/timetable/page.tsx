@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth, supabase } from "@/lib/supabase/client";
 import { getTimetableServer, Period, DayTimetable } from "@/app/actions/timetable";
 import { CalendarIcon, Clock, Loader2 } from "lucide-react";
 
@@ -19,11 +18,16 @@ export default function StudentTimetablePage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          if (data.classId) {
-            const res = await getTimetableServer(data.classId);
+        const { data: userDoc } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (userDoc) {
+          const classId = userDoc.class_id || userDoc.classId;
+          if (classId) {
+            const res = await getTimetableServer(classId);
             if (res.success) {
               setTimetableMap(res.data || {});
             }

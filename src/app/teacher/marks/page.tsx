@@ -6,8 +6,9 @@ import { getStudentsServer } from "@/app/actions/students";
 import { getMarksServer, saveMarksServer } from "@/app/actions/marks";
 import { getTeacherProfileServer } from "@/app/actions/users";
 import { getSubjectsServer, Subject } from "@/app/actions/subjects";
-import { auth } from "@/lib/firebase/config";
-import { Loader2, Save, FileText, ArrowLeft, CheckCircle } from "lucide-react";
+import { auth } from "@/lib/supabase/client";
+import { Loader2, Save, FileText, ArrowLeft, CheckCircle, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 import Link from "next/link";
 
 export default function MarksManagerPage() {
@@ -268,7 +269,31 @@ export default function MarksManagerPage() {
               )}
               
               {students.length > 0 && (
-                <div className="p-4 bg-gray-50 border-t flex justify-end">
+                <div className="p-4 bg-gray-50 border-t flex flex-wrap justify-between items-center gap-4">
+                  <button
+                    onClick={() => {
+                      const headers = ["Roll No", "Student Name", "Subject", "Exam Name", "Marks Obtained", "Total Marks", "Percentage"];
+                      const rows = students.map(s => {
+                        const score = marks[s.uid] !== undefined ? marks[s.uid] : 0;
+                        const pct = totalMarks > 0 ? `${Math.round((score / totalMarks) * 100)}%` : "0%";
+                        return [
+                          s.rollNumber || "",
+                          s.name || "",
+                          activeSubject.name,
+                          examName,
+                          score,
+                          totalMarks,
+                          pct
+                        ];
+                      });
+                      exportToCsv(`Marks_${activeSubject.name}_${examName}`, headers, rows);
+                    }}
+                    type="button"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+                  >
+                    <Download className="w-4 h-4" /> Export Grade Sheet CSV
+                  </button>
+
                   <button
                     onClick={handleSave}
                     disabled={saving || !examName}

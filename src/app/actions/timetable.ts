@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type Period = {
@@ -15,18 +15,26 @@ export type Period = {
 
 export type DayTimetable = {
   classId: string;
-  dayOfWeek: string; // e.g., "Monday"
+  dayOfWeek: string;
   periods: Period[];
 };
 
 export async function getTimetableServer(classId: string) {
   try {
-    const snapshot = await adminDb.collection("timetables").where("classId", "==", classId).get();
+    const { data, error } = await supabaseAdmin
+      .from("timetables")
+      .select("*")
+      .eq("class_id", classId);
+
+    if (error) throw error;
     const timetables: Record<string, DayTimetable> = {};
     
-    snapshot.docs.forEach(doc => {
-      const data = doc.data() as DayTimetable;
-      timetables[data.dayOfWeek] = data;
+    (data || []).forEach((row: any) => {
+      timetables[row.day_of_week] = {
+        classId: row.class_id,
+        dayOfWeek: row.day_of_week,
+        periods: row.periods || []
+      };
     });
 
     return { success: true, data: timetables };
@@ -38,30 +46,34 @@ export async function getTimetableServer(classId: string) {
 
 export async function saveDayTimetableServer(actingUid: string, classId: string, dayOfWeek: string, periods: Period[]) {
   try {
-    // 1. Check if the user is the class teacher for this class
-    const assignmentDocs = await adminDb.collection("teacher_class_assignments")
-      .where("teacherId", "==", actingUid)
-      .where("classId", "==", classId)
-      .where("isClassTeacher", "==", true)
-      .get();
+    const { data: assignmentDocs } = await supabaseAdmin
+      .from("teacher_class_assignments")
+      .select("id")
+      .eq("teacher_id", actingUid)
+      .eq("class_id", classId)
+      .eq("is_class_teacher", true);
       
-    if (assignmentDocs.empty) {
-      // Principal fallback check
-      const userDoc = await adminDb.collection("users").doc(actingUid).get();
-      if (!userDoc.exists || userDoc.data()?.role !== "principal") {
+    if (!assignmentDocs || assignmentDocs.length === 0) {
+      const { data: userDoc } = await supabaseAdmin.from("users").select("role").eq("id", actingUid).maybeSingle();
+      if (!userDoc || userDoc.role !== "principal") {
         return { success: false, error: "Unauthorized. Only the Class Teacher or Principal can modify the timetable." };
       }
     }
 
     const docId = `${classId}_${dayOfWeek}`;
     
-    await adminDb.collection("timetables").doc(docId).set({
-      classId,
-      dayOfWeek,
-      periods,
-      updatedAt: Date.now(),
-      updatedBy: actingUid
-    });
+    const { error: upsertError } = await supabaseAdmin
+      .from("timetables")
+      .upsert({
+        id: docId,
+        class_id: classId,
+        day_of_week: dayOfWeek,
+        periods: periods,
+        updated_at: Date.now(),
+        updated_by: actingUid
+      });
+
+    if (upsertError) throw upsertError;
 
     revalidatePath("/teacher/timetable");
     return { success: true };
@@ -73,24 +85,24 @@ export async function saveDayTimetableServer(actingUid: string, classId: string,
 
 export async function getTeacherScheduleServer(teacherId: string, dayOfWeek: string) {
   try {
-    // This is a bit inefficient for NoSQL, but works for our scale.
-    // We fetch all timetables for the given day and filter for the teacher.
-    const snapshot = await adminDb.collection("timetables")
-      .where("dayOfWeek", "==", dayOfWeek)
-      .get();
+    const { data, error } = await supabaseAdmin
+      .from("timetables")
+      .select("*")
+      .eq("day_of_week", dayOfWeek);
+
+    if (error) throw error;
       
     let schedule: { classId: string; period: Period }[] = [];
     
-    snapshot.docs.forEach(doc => {
-      const data = doc.data() as DayTimetable;
-      data.periods.forEach(p => {
+    (data || []).forEach((row: any) => {
+      const periods = (row.periods || []) as Period[];
+      periods.forEach(p => {
         if (p.teacherId === teacherId) {
-          schedule.push({ classId: data.classId, period: p });
+          schedule.push({ classId: row.class_id, period: p });
         }
       });
     });
 
-    // Sort by start time
     schedule.sort((a, b) => a.period.startTime.localeCompare(b.period.startTime));
 
     return { success: true, data: schedule };

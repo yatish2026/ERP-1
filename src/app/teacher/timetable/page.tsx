@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/supabase/client";
 import { getTeacherClassesServer } from "@/app/actions/classes";
 import { getSubjectsServer, Subject } from "@/app/actions/subjects";
 import { getTeachersServer } from "@/app/actions/users";
 import { getTimetableServer, saveDayTimetableServer, Period, DayTimetable } from "@/app/actions/timetable";
-import { CalendarIcon, Loader2, Save, Plus, Trash2, Clock, User, BookOpen } from "lucide-react";
+import { CalendarIcon, Loader2, Save, Plus, Trash2, Clock, User, BookOpen, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -147,16 +148,42 @@ export default function TeacherTimetableBuilderPage() {
   // Filter subjects for the selected class (or allow global subjects)
   const availableSubjects = subjects.filter(s => s.classId === selectedClassId || !s.classId);
 
+  const handleDownloadTimetable = () => {
+    const headers = ["Class", "Day of Week", "Period #", "Timing", "Subject Name", "Faculty / Teacher"];
+    const rows = periods.map(p => {
+      const teacherObj = teachers.find(t => t.uid === p.teacherId);
+      return [
+        selectedClassId,
+        selectedDay,
+        p.periodNumber,
+        `${p.startTime} - ${p.endTime}`,
+        p.subjectName,
+        teacherObj ? teacherObj.name : p.teacherName || "Faculty"
+      ];
+    });
+    exportToCsv(`Schedule_${selectedClassId}_${selectedDay}`, headers, rows);
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <header className="mb-8 border-b pb-4">
-        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <CalendarIcon className="text-blue-500 w-8 h-8" /> 
-          Timetable Builder
-        </h2>
-        <p className="text-gray-600 mt-2">
-          Construct and manage the weekly timetable for your class.
-        </p>
+      <header className="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <CalendarIcon className="text-blue-500 w-8 h-8" /> 
+            Timetable Builder
+          </h2>
+          <p className="text-gray-600 mt-2">
+            Construct, manage, and export the weekly timetable for your class.
+          </p>
+        </div>
+        {periods.length > 0 && (
+          <button
+            onClick={handleDownloadTimetable}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+          >
+            <Download className="w-4 h-4" /> Export Day Schedule CSV
+          </button>
+        )}
       </header>
 
       {message.text && (

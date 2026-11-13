@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/lib/supabase/client";
 import { getStudentDetailedAttendanceServer, getStudentAttendanceStatsServer } from "@/app/actions/attendance";
-import { CheckSquare, Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckSquare, Loader2, CheckCircle, XCircle, Clock, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 export default function StudentAttendancePage() {
   const [loading, setLoading] = useState(true);
@@ -45,14 +45,37 @@ export default function StudentAttendancePage() {
     return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600 w-8 h-8" /></div>;
   }
 
+  const handleDownloadLog = () => {
+    const headers = ["Date", "Period #", "Subject Name", "Status", "Class"];
+    const rows = records.map(r => [
+      r.date || "",
+      r.periodNumber || "",
+      r.subjectName || "",
+      r.status || "",
+      r.classId || ""
+    ]);
+
+    exportToCsv("My_Attendance_Report", headers, rows);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
-      <header className="mb-8 border-b pb-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <CheckSquare className="text-blue-500 w-8 h-8" /> 
-          My Attendance Record
-        </h2>
-        <p className="text-sm md:text-base text-gray-600 mt-2">View your overall attendance percentage and detailed daily logs.</p>
+      <header className="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <CheckSquare className="text-blue-500 w-8 h-8" /> 
+            My Attendance Record
+          </h2>
+          <p className="text-sm md:text-base text-gray-600 mt-2">View and export your overall attendance percentage and detailed daily logs.</p>
+        </div>
+        {records.length > 0 && (
+          <button
+            onClick={handleDownloadLog}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+          >
+            <Download className="w-4 h-4" /> Export Attendance CSV
+          </button>
+        )}
       </header>
 
       {/* Stats Cards */}

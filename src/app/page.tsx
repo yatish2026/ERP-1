@@ -20,8 +20,8 @@ export default function Home() {
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div>
-                <span className="font-bold text-xl tracking-tight text-gray-900">SchoolERP</span>
-                <span className="hidden sm:block text-[10px] uppercase tracking-wider text-blue-600 font-bold">Smart School Management</span>
+                <span className="font-bold text-xl tracking-tight text-gray-900">CollegeERP</span>
+                <span className="hidden sm:block text-[10px] uppercase tracking-wider text-blue-600 font-bold">Smart College & Campus Management</span>
               </div>
             </div>
 
@@ -62,16 +62,16 @@ export default function Home() {
           {/* Left Column: Text & CTA */}
           <div className="text-left pr-0 lg:pr-8">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm text-gray-700 text-xs font-bold uppercase tracking-wider mb-8">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div> Live Operations
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div> Live Campus Operations
             </div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 mb-6 leading-[1.1] relative">
               <span className="absolute -left-6 top-0 text-blue-100 -z-10">✦</span>
-              Run Your Entire School From <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">One Smart Platform.</span>
+              Run Your Entire College From <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">One Smart Platform.</span>
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-xl leading-relaxed">
-              From student management to attendance, exams, fees and communication — everything your school needs, connected in one powerful interface.
+              From student & faculty management to attendance, exams, fees and campus communication — everything your college needs, connected in one powerful interface.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-start gap-4 mb-10">
@@ -124,7 +124,7 @@ export default function Home() {
                   <div className="hidden sm:block w-56 border-r border-gray-100 bg-gray-50/50 p-4">
                     <div className="flex items-center gap-2 mb-8 px-2">
                       <GraduationCap className="w-6 h-6 text-blue-600" />
-                      <span className="font-bold text-gray-900 tracking-tight">SchoolERP</span>
+                      <span className="font-bold text-gray-900 tracking-tight">CollegeERP</span>
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-3 bg-white border border-gray-200 shadow-sm rounded-lg px-3 py-2.5 text-blue-700 font-semibold text-sm">
@@ -255,10 +255,10 @@ export default function Home() {
       {/* SECTION 5 — TRUST / VALUE STRIP */}
       <section className="py-12 border-y border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Everything your school needs. One connected system.</p>
+          <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Everything your college needs. One connected system.</p>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
-            <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><Users className="w-5 h-5 text-gray-700"/><span className="font-semibold text-gray-800">Student Management</span></div>
-            <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><FileText className="w-5 h-5 text-gray-700"/><span className="font-semibold text-gray-800">Academic Management</span></div>
+            <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><Users className="w-5 h-5 text-gray-700"/><span className="font-semibold text-gray-800">Student Directory</span></div>
+            <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><FileText className="w-5 h-5 text-gray-700"/><span className="font-semibold text-gray-800">B.Tech & Academics</span></div>
             <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><CheckSquare className="w-5 h-5 text-gray-700"/><span className="font-semibold text-gray-800">Smart Attendance</span></div>
             <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><IndianRupee className="w-5 h-5 text-gray-700"/><span className="font-semibold text-gray-800">Fee Management</span></div>
             <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"><BrainCircuit className="w-5 h-5 text-blue-600"/><span className="font-semibold text-gray-800">AI Communication</span></div>
@@ -269,7 +269,7 @@ export default function Home() {
       {/* SECTION 6 — PROBLEM -> SOLUTION */}
       <section className="py-24 px-4 bg-[#fafafa]">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-16 tracking-tight">School Management Shouldn't Be This Complicated.</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-16 tracking-tight">College Management Shouldn't Be This Complicated.</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative">
             <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
@@ -282,24 +282,24 @@ export default function Home() {
             <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm text-left opacity-80">
               <div className="inline-block px-3 py-1 bg-red-50 text-red-600 font-bold text-sm rounded-lg mb-6">Before</div>
               <ul className="space-y-4">
-                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Attendance tracked manually</li>
-                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Student records scattered across files</li>
-                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Teachers depend on unorganized WhatsApp groups</li>
-                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Fee follow-ups are difficult and manual</li>
-                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Exam records spread across multiple systems</li>
+                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Attendance tracked on paper sheets</li>
+                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Student records scattered across department registers</li>
+                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Faculty depend on unorganized WhatsApp groups</li>
+                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Semester fee follow-ups are difficult and manual</li>
+                <li className="flex items-start gap-3 text-gray-600"><div className="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></div> Mid-term and lab marks spread across multiple files</li>
               </ul>
             </div>
 
             {/* After */}
             <div className="bg-white p-8 rounded-3xl border-2 border-blue-500 shadow-xl shadow-blue-900/5 text-left relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10"></div>
-              <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 font-bold text-sm rounded-lg mb-6">With SchoolERP</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">One connected platform.<br/>One source of truth.</h3>
+              <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 font-bold text-sm rounded-lg mb-6">With CollegeERP</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">One connected campus platform.<br/>One source of truth.</h3>
               <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> Everything in a centralized dashboard</li>
-                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> Real-time mobile access for all roles</li>
-                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> Automated fee and exam tracking</li>
-                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> AI-powered absentee calling</li>
+                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> Centralized college dashboard for Dean & Faculty</li>
+                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> Real-time mobile access for Students & Professors</li>
+                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> Automated fee, semester exam and lab tracking</li>
+                <li className="flex items-center gap-3 text-gray-800 font-medium"><CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0" /> AI-powered absentee calling & notifications</li>
               </ul>
             </div>
           </div>
@@ -310,8 +310,8 @@ export default function Home() {
       <section id="features" className="py-24 px-4 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">Everything Your School Needs. In One Place.</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Powerful tools designed around the everyday workflow of modern schools.</p>
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">Everything Your College Needs. In One Place.</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Powerful tools designed around the everyday workflow of modern colleges and universities.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -320,8 +320,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
                 <LayoutDashboard className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Smart Dashboard</h3>
-              <p className="text-gray-600">Get a complete overview of your school at a glance. Track students, attendance, fees, and exams instantly.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Campus Dashboard</h3>
+              <p className="text-gray-600">Get a complete overview of your college at a glance. Track students, faculty, attendance, fees, and exams instantly.</p>
             </div>
 
             {/* Feature 2 */}
@@ -330,7 +330,7 @@ export default function Home() {
                 <Users className="w-6 h-6 text-indigo-600 group-hover:text-white transition-colors" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Student Management</h3>
-              <p className="text-gray-600">Manage student records from admission to graduation. Profiles, class allocation, and parent info.</p>
+              <p className="text-gray-600">Manage B.Tech student records from enrollment to graduation. Branch allocation, roll numbers, and parent details.</p>
             </div>
 
             {/* Feature 3 */}
@@ -338,8 +338,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition-colors">
                 <Settings className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Teacher Management</h3>
-              <p className="text-gray-600">Manage your teaching staff. Assign subjects, allocate classes, and control access permissions easily.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Faculty Management</h3>
+              <p className="text-gray-600">Manage professors and department faculty. Assign B.Tech subjects, allocate classes, and control permissions.</p>
             </div>
 
             {/* Feature 4 */}
@@ -347,8 +347,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition-colors">
                 <GraduationCap className="w-6 h-6 text-green-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Class Management</h3>
-              <p className="text-gray-600">Organize classes and sections seamlessly. Assign Class Teachers and structure your school hierarchy.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Branch & Class Management</h3>
+              <p className="text-gray-600">Organize branches (CSE, ECE, AI&DS) and sections seamlessly. Assign Class Coordinators and branch mentors.</p>
             </div>
 
             {/* Feature 5 */}
@@ -356,8 +356,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-600 transition-colors">
                 <CheckSquare className="w-6 h-6 text-red-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Smart Attendance</h3>
-              <p className="text-gray-600">Record and monitor daily and class-wise attendance. Powerful analytics and absentee tracking.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Smart Period Attendance</h3>
+              <p className="text-gray-600">Record and monitor period-wise lecture and lab attendance. Powerful analytics and shortage tracking.</p>
             </div>
 
             {/* Feature 6 */}
@@ -365,8 +365,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-600 transition-colors">
                 <FileText className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Marks & Exams</h3>
-              <p className="text-gray-600">Manage examinations and academic performance. Upload marks, track results, and generate reports.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Marks & Semester Exams</h3>
+              <p className="text-gray-600">Manage mid-terms, semester exams, and practical labs. Upload internal marks, track SGPA, and generate reports.</p>
             </div>
 
             {/* Feature 7 */}
@@ -374,8 +374,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-yellow-600 transition-colors">
                 <IndianRupee className="w-6 h-6 text-yellow-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Fee Management</h3>
-              <p className="text-gray-600">Track school fees and payment status with complete visibility. Monitor paid and pending dues.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Semester Fee Management</h3>
+              <p className="text-gray-600">Track tuition, lab, hostel, and exam fees with complete visibility. Monitor paid and pending dues.</p>
             </div>
 
             {/* Feature 8 */}
@@ -383,8 +383,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-600 transition-colors">
                 <CalendarIcon className="w-6 h-6 text-teal-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Timetable Management</h3>
-              <p className="text-gray-600">Build class timetables without the usual complexity. Avoid clashes and manage teacher schedules.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Weekly Timetable Schedule</h3>
+              <p className="text-gray-600">Build comprehensive 6-day lecture and lab schedules. Eliminate faculty clashes and manage rooms seamlessly.</p>
             </div>
 
             {/* Feature 9 */}
@@ -392,8 +392,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-sky-600 transition-colors">
                 <Megaphone className="w-6 h-6 text-sky-600 group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Announcements</h3>
-              <p className="text-gray-600">Keep everyone informed. Publish targeted notices for teachers, students, or the whole school.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Campus Announcements</h3>
+              <p className="text-gray-600">Keep everyone informed. Publish placement alerts, exam circulars, and departmental updates across campus.</p>
             </div>
           </div>
         </div>
@@ -493,33 +493,33 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">Everyone Gets the Right Access.</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-medium">Role-based permissions keep your school's data secure, organized, and visible only to those who need it.</p>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-medium">Role-based permissions keep your college's data secure, organized, and visible only to those who need it.</p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)]">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">👑 Principal</h3>
-              <p className="text-sm text-gray-600">Complete school-wide visibility and control. Manage staff, oversee attendance, fees, and post global announcements.</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">👑 Principal / Dean</h3>
+              <p className="text-sm text-gray-600">Complete campus-wide visibility and control. Manage faculty, oversee attendance, semester fees, and post global circulars.</p>
             </div>
             
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)]">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">👨‍🏫 Class Teacher</h3>
-              <p className="text-sm text-gray-600">Manage students and activities for their assigned class. High-level access to their specific classroom data.</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">👨‍🏫 Class Coordinator</h3>
+              <p className="text-sm text-gray-600">Manage B.Tech students and activities for their assigned branch section. High-level access to their specific classroom data.</p>
             </div>
 
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)]">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">✏️ Teacher</h3>
-              <p className="text-sm text-gray-600">Access assigned classes via timetable. Mark attendance, upload marks, and post to Class Groups.</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">✏️ Professor / Faculty</h3>
+              <p className="text-sm text-gray-600">Access assigned classes via timetable. Mark lecture attendance, upload internal & lab marks, and share notes in Class Groups.</p>
             </div>
 
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)]">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">🎓 Student</h3>
-              <p className="text-sm text-gray-600">Access personal academic information, grades, timetables, and receive assignments through Class Groups.</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">🎓 B.Tech Student</h3>
+              <p className="text-sm text-gray-600">Access personal academic grades, SGPA, lecture timetables, and receive assignments through Class Groups.</p>
             </div>
 
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)]">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">👪 Parent</h3>
-              <p className="text-sm text-gray-600">Receive important updates, view fee records, and monitor child's attendance and academic progress.</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 border-b pb-3 border-gray-100">👪 Parent / Guardian</h3>
+              <p className="text-sm text-gray-600">Receive important campus updates, view fee invoices, and monitor student attendance and academic progress.</p>
             </div>
           </div>
         </div>
@@ -528,21 +528,21 @@ export default function Home() {
       {/* SECTION 10 — HOW IT WORKS */}
       <section id="how-it-works" className="py-24 px-4 bg-white border-t border-gray-100">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold text-center text-gray-900 mb-16 tracking-tight">From Setup to Smarter School Management.</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-center text-gray-900 mb-16 tracking-tight">From Setup to Smarter Campus Management.</h2>
           
           <div className="flex flex-col md:flex-row gap-8 relative">
             <div className="hidden md:block absolute top-8 left-0 w-full h-0.5 bg-gray-100"></div>
             
             <div className="flex-1 relative">
               <div className="w-16 h-16 bg-blue-50 text-blue-600 font-black text-2xl rounded-2xl flex items-center justify-center mb-6 relative z-10 border border-blue-100">1</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Set Up Your School</h3>
-              <p className="text-gray-600">Import or create classes, subjects, teachers, and student directories to establish your structure.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Set Up Your Campus</h3>
+              <p className="text-gray-600">Import or create branches, B.Tech subjects, faculty rosters, and student directories to establish your structure.</p>
             </div>
 
             <div className="flex-1 relative">
               <div className="w-16 h-16 bg-indigo-50 text-indigo-600 font-black text-2xl rounded-2xl flex items-center justify-center mb-6 relative z-10 border border-indigo-100">2</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Run Daily Operations</h3>
-              <p className="text-gray-600">Manage attendance smoothly, structure timetables, conduct exams, and process fee collections.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Run Daily Academic Operations</h3>
+              <p className="text-gray-600">Manage lecture attendance smoothly, structure timetables, conduct semester exams, and process fee collections.</p>
             </div>
 
             <div className="flex-1 relative">
@@ -565,7 +565,7 @@ export default function Home() {
                 <Clock className="w-7 h-7 text-green-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Less Manual Work</h3>
-              <p className="text-gray-600 text-lg">Reduce repetitive administrative tasks. Automate reporting, timetable scheduling, and parent follow-ups with ease.</p>
+              <p className="text-gray-600 text-lg">Reduce repetitive administrative tasks. Automate reporting, timetable scheduling, and student follow-ups with ease.</p>
             </div>
 
             <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-gray-100">
@@ -573,7 +573,7 @@ export default function Home() {
                 <LayoutDashboard className="w-7 h-7 text-blue-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Better Visibility</h3>
-              <p className="text-gray-600 text-lg">Get real-time insight into school operations. Know exactly who is absent, fees pending, and academic performance instantly.</p>
+              <p className="text-gray-600 text-lg">Get real-time insight into campus operations. Know exactly who is absent, fees pending, and academic performance instantly.</p>
             </div>
 
             <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-gray-100">
@@ -581,7 +581,7 @@ export default function Home() {
                 <Megaphone className="w-7 h-7 text-yellow-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Faster Communication</h3>
-              <p className="text-gray-600 text-lg">Keep parents, teachers, and students connected with targeted announcements and secure Class Group feeds.</p>
+              <p className="text-gray-600 text-lg">Keep faculty, parents, and students connected with targeted circulars and secure Class Group feeds.</p>
             </div>
 
             <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-gray-100">
@@ -599,7 +599,7 @@ export default function Home() {
       <section className="py-20 px-4 bg-white border-y border-gray-100">
         <div className="max-w-4xl mx-auto text-center">
           <ShieldCheck className="w-16 h-16 text-blue-600 mx-auto mb-6" />
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Your School Data. Organized and Protected.</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Your College Data. Organized and Protected.</h2>
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-gray-600 font-medium">
             <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Role-based access</span>
             <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Secure authentication</span>
@@ -615,9 +615,9 @@ export default function Home() {
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent bg-[length:20px_20px]"></div>
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl md:text-6xl font-extrabold mb-8 tracking-tight">Ready to Make Your School Smarter?</h2>
+          <h2 className="text-4xl md:text-6xl font-extrabold mb-8 tracking-tight">Ready to Make Your College Smarter?</h2>
           <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
-            Bring students, teachers, academics, attendance, fees and communication together in one powerful platform.
+            Bring students, faculty, academics, attendance, fees and communication together in one powerful platform.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a 
@@ -644,9 +644,9 @@ export default function Home() {
           <div>
             <div className="flex items-center gap-2 mb-6 text-white">
               <GraduationCap className="w-6 h-6" />
-              <span className="font-bold text-xl tracking-tight">SchoolERP</span>
+              <span className="font-bold text-xl tracking-tight">CollegeERP</span>
             </div>
-            <p className="text-sm">Smart School Management Platform built for the future of education.</p>
+            <p className="text-sm">Smart College Management Platform built for the future of higher education.</p>
           </div>
           
           <div>
@@ -663,9 +663,9 @@ export default function Home() {
           <div>
             <h4 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">Solutions</h4>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">For Principals</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">For Teachers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">For Entire Schools</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">For Deans & Principals</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">For Professors & Faculty</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">For Entire Campuses</a></li>
             </ul>
           </div>
 
@@ -680,7 +680,7 @@ export default function Home() {
         </div>
         
         <div className="max-w-7xl mx-auto pt-8 border-t border-gray-800 text-sm flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2026 SchoolERP. All rights reserved.</p>
+          <p>© 2026 CollegeERP. All rights reserved.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>

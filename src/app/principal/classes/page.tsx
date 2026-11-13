@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { getClassesServer, createClassServer } from "@/app/actions/classes";
 import { getTeachersServer } from "@/app/actions/users";
 import { assignClassTeacherServer } from "@/app/actions/assignments";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/supabase/client";
 import { GraduationCap, Plus, Users, UserPlus, Loader2 } from "lucide-react";
 
 export default function ClassesPage() {

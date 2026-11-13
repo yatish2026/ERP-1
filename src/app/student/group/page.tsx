@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth, supabase } from "@/lib/supabase/client";
 import { getGroupPostsServer, GroupPost } from "@/app/actions/groups";
 import { Loader2, FileText, Calendar, BookOpen } from "lucide-react";
 
@@ -14,9 +13,14 @@ export default function StudentClassGroupPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const uClassId = userDoc.data().classId;
+        const { data: userDoc } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (userDoc) {
+          const uClassId = userDoc.class_id || userDoc.classId;
           setClassId(uClassId || "");
           
           if (uClassId) {

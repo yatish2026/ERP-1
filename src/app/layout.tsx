@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SchoolERP | Smart School Management Platform",
-  description: "Manage students, teachers, attendance, exams, fees, timetables and school communication with one powerful School ERP, enhanced with AI-powered calling.",
+  title: "CollegeERP | Smart College & Campus Management Platform",
+  description: "Manage students, faculty, attendance, exams, fees, timetables and campus communication with one powerful College ERP, enhanced with AI-powered calling.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

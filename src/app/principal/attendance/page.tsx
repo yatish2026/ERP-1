@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { getClassesServer } from "@/app/actions/classes";
 import { getStudentsServer } from "@/app/actions/students";
 import { getClassAttendanceServer } from "@/app/actions/attendance";
-import { CheckSquare, Loader2, Filter, Calendar as CalendarIcon } from "lucide-react";
+import { CheckSquare, Loader2, Filter, Calendar as CalendarIcon, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 export default function PrincipalAttendancePage() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -58,16 +59,46 @@ export default function PrincipalAttendancePage() {
   // Extract unique periods for the columns
   const periods = Array.from(new Set(attendanceRecords.map(r => r.periodNumber))).sort((a, b) => a - b);
 
+  const handleDownloadAttendance = () => {
+    const headers = ["Roll No", "Admission No", "Student Name", "Class", "Date", ...periods.map(p => `Period ${p}`)];
+    const rows = students.map(student => {
+      const periodStatuses = periods.map(p => {
+        const record = attendanceRecords.find(r => r.studentId === student.uid && r.periodNumber === p);
+        return record ? record.status : "N/A";
+      });
+      return [
+        student.rollNumber || "",
+        student.admissionNumber || "",
+        student.name || "",
+        selectedClassId,
+        selectedDate,
+        ...periodStatuses
+      ];
+    });
+
+    exportToCsv(`Attendance_${selectedClassId}_${selectedDate}`, headers, rows);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <header className="mb-8 border-b pb-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <CheckSquare className="text-blue-500 w-8 h-8" /> 
-          Attendance Overview
-        </h2>
-        <p className="text-sm md:text-base text-gray-600 mt-2">
-          View daily attendance logs for any class across all recorded periods.
-        </p>
+      <header className="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <CheckSquare className="text-blue-500 w-8 h-8" /> 
+            Attendance Overview
+          </h2>
+          <p className="text-sm md:text-base text-gray-600 mt-2">
+            View and export daily attendance logs for any class across all recorded periods.
+          </p>
+        </div>
+        {attendanceRecords.length > 0 && (
+          <button
+            onClick={handleDownloadAttendance}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+          >
+            <Download className="w-4 h-4" /> Export Register CSV
+          </button>
+        )}
       </header>
 
       <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">

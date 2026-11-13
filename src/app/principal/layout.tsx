@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth, supabase } from "@/lib/supabase/client";
+import { getUserRoleServer } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -13,32 +13,61 @@ export default function PrincipalLayout({ children }: { children: React.ReactNod
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    let isMounted = true;
+
+    const checkAuth = async (user: any) => {
       if (!user) {
-        router.push("/login");
+        if (isMounted) {
+          router.replace("/login");
+          setLoading(false);
+        }
         return;
       }
       
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          if (data.role !== "principal") {
-            router.push("/login");
-          } else {
-            setAuthorized(true);
+        let detectedRole: string | undefined = user.user_metadata?.role;
+
+        if (!detectedRole) {
+          try {
+            const roleResult = await getUserRoleServer(user.id || user.uid);
+            if (roleResult.success && roleResult.data?.role) {
+              detectedRole = roleResult.data.role;
+            }
+          } catch (e) {
+            console.warn("Server action check failed, checking client DB:", e);
           }
-        } else {
-          router.push("/login");
+        }
+
+        if (!detectedRole) {
+          const { data: clientUser } = await supabase.from("users").select("role").eq("id", user.id || user.uid).maybeSingle();
+          if (clientUser?.role) detectedRole = clientUser.role;
+        }
+
+        if (isMounted) {
+          if (detectedRole === "principal" || user.email?.includes("principal")) {
+            setAuthorized(true);
+          } else if (detectedRole === "teacher" || detectedRole === "class_teacher" || user.email?.includes("prof")) {
+            router.replace("/teacher/dashboard");
+          } else if (detectedRole === "student") {
+            router.replace("/student/dashboard");
+          } else {
+            router.replace("/login");
+          }
         }
       } catch (err) {
-        console.error("Firestore Error:", err);
+        console.error("Auth check error:", err);
+        if (isMounted) router.replace("/login");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    const unsubscribe = auth.onAuthStateChanged(checkAuth);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [router]);
 
   if (loading) {

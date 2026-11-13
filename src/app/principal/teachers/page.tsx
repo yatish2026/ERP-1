@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { getTeachersServer, createTeacherServer, deleteUserServer, updateUserServer } from "@/app/actions/users";
 import { getSubjectsServer, Subject } from "@/app/actions/subjects";
 import { getClassesServer } from "@/app/actions/classes";
-import { auth } from "@/lib/firebase/config";
-import { UserPlus, Users, Loader2, Trash2, Edit2, X, Save } from "lucide-react";
+import { auth } from "@/lib/supabase/client";
+import { UserPlus, Users, Loader2, Trash2, Edit2, X, Save, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -114,11 +115,40 @@ export default function TeachersPage() {
     return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
   }
 
+  const handleDownloadTeachers = () => {
+    const headers = ["Faculty Name", "Email Address", "Role / Designation", "Assigned Class", "Assigned Subjects"];
+    const rows = teachers.map(t => {
+      const assignedSubNames = (t.assignedSubjects || [])
+        .map((subId: string) => {
+          const sub = subjects.find(s => s.id === subId);
+          return sub ? sub.name : subId;
+        })
+        .join("; ");
+
+      return [
+        t.name || "",
+        t.email || "",
+        t.role === 'class_teacher' ? 'Class Teacher' : 'Subject Professor',
+        t.classId || "N/A",
+        assignedSubNames || "None"
+      ];
+    });
+    exportToCsv("Faculty_Directory", headers, rows);
+  };
+
   return (
     <div className="p-8">
-      <header className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Manage Teachers</h2>
-        <p className="text-gray-600 mt-2">Create and view all teachers in the school.</p>
+      <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Manage Faculty & Teachers</h2>
+          <p className="text-gray-600 mt-2">Create, view, and export all faculty members and teachers in the college.</p>
+        </div>
+        <button
+          onClick={handleDownloadTeachers}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+        >
+          <Download className="w-4 h-4" /> Export CSV ({teachers.length})
+        </button>
       </header>
 
       {error && <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>}
@@ -135,7 +165,7 @@ export default function TeachersPage() {
       {/* Create Teacher Form */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-xl mb-8">
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <UserPlus className="text-blue-500" /> Register New Teacher
+          <UserPlus className="text-blue-500" /> Register New Faculty Member
         </h3>
         <form onSubmit={handleCreateTeacher} className="space-y-4">
           <div>
@@ -144,7 +174,7 @@ export default function TeachersPage() {
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)} 
-              placeholder="e.g., John Doe" 
+              placeholder="e.g., Dr. Rajesh Sharma" 
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               required
             />
@@ -155,7 +185,7 @@ export default function TeachersPage() {
               type="email" 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              placeholder="teacher@school.com" 
+              placeholder="professor@college.edu" 
               className="w-full border border-gray-300 rounded-md shadow-sm p-2"
               required
             />

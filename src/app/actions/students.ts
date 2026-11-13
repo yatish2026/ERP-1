@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb, adminAuth } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { canManageClass } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 
@@ -19,7 +19,6 @@ export async function createStudentServer(
   }
 ) {
   try {
-    // 1. SECURITY CHECK: Ensure this user is allowed to add a student to this class
     const isAuthorized = await canManageClass(actingUid, studentData.classId);
     
     if (!isAuthorized) {
@@ -29,38 +28,47 @@ export async function createStudentServer(
     // Generate random 8-character password
     const randomPassword = Math.random().toString(36).slice(-8);
 
-    // 2. Create the Firebase Auth account
-    const userRecord = await adminAuth.createUser({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: studentData.email,
       password: randomPassword,
-      displayName: studentData.name,
+      email_confirm: true,
+      user_metadata: { name: studentData.name, role: "student" }
     });
 
-    const uid = userRecord.uid;
+    if (authError) {
+      if (authError.message.toLowerCase().includes("already") || authError.code === "email_exists") {
+        return { success: false, error: "A user with this email already exists." };
+      }
+      return { success: false, error: authError.message };
+    }
 
-    // 3. Create the `users` profile
-    await adminDb.collection("users").doc(uid).set({
+    const uid = authData.user.id;
+
+    // Create the `users` profile
+    await supabaseAdmin.from("users").upsert({
+      id: uid,
       name: studentData.name,
       email: studentData.email,
       role: "student",
-      classId: studentData.classId,
-      createdAt: Date.now(),
+      class_id: studentData.classId,
+      created_at: Date.now(),
     });
 
-    // 4. Create the detailed `students` profile
-    await adminDb.collection("students").doc(uid).set({
-      uid,
+    // Create the detailed `students` profile
+    await supabaseAdmin.from("students").upsert({
+      id: uid,
+      uid: uid,
       name: studentData.name,
       email: studentData.email,
-      classId: studentData.classId,
-      admissionNumber: studentData.admissionNumber || "",
-      rollNumber: studentData.rollNumber || "",
-      dateOfBirth: studentData.dateOfBirth || "",
+      class_id: studentData.classId,
+      admission_number: studentData.admissionNumber || "",
+      roll_number: studentData.rollNumber || "",
+      date_of_birth: studentData.dateOfBirth || "",
       gender: studentData.gender || "Not Specified",
-      parentName: studentData.parentName || "",
-      parentPhone: studentData.parentPhone || "",
-      addedBy: actingUid,
-      addedAt: Date.now(),
+      parent_name: studentData.parentName || "",
+      parent_phone: studentData.parentPhone || "",
+      added_by: actingUid,
+      added_at: Date.now(),
     });
 
     revalidatePath("/teacher/students");
@@ -69,28 +77,39 @@ export async function createStudentServer(
     return { success: true, uid, password: randomPassword };
   } catch (error: any) {
     console.error("Error creating student:", error);
-    // Handle email already exists
-    if (error.code === "auth/email-already-exists") {
-      return { success: false, error: "A user with this email already exists." };
-    }
     return { success: false, error: error.message || "Failed to create student." };
   }
 }
 
 export async function getStudentsServer(classId?: string) {
   try {
-    let query: FirebaseFirestore.Query = adminDb.collection("students");
+    let query = supabaseAdmin.from("students").select("*");
     if (classId) {
-      query = query.where("classId", "==", classId);
+      query = query.eq("class_id", classId);
     }
     
-    const snapshot = await query.get();
-    
+    const { data, error } = await query;
+    if (error) throw error;
+
     return {
       success: true,
-      data: snapshot.docs.map(doc => doc.data())
+      data: (data || []).map((s: any) => ({
+        uid: s.id || s.uid,
+        id: s.id || s.uid,
+        name: s.name,
+        email: s.email,
+        classId: s.class_id,
+        admissionNumber: s.admission_number,
+        rollNumber: s.roll_number,
+        dateOfBirth: s.date_of_birth,
+        gender: s.gender,
+        parentName: s.parent_name,
+        parentPhone: s.parent_phone,
+        addedBy: s.added_by,
+        addedAt: s.added_at,
+      }))
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching students:", error);
     return { success: false, error: "Failed to fetch students." };
   }

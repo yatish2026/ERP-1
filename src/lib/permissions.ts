@@ -1,4 +1,4 @@
-import { adminDb } from "./firebase/admin";
+import { supabaseAdmin } from "./supabase/admin";
 
 /**
  * Checks if the user is authorized to manage students within a specific class.
@@ -6,10 +6,15 @@ import { adminDb } from "./firebase/admin";
  */
 export async function canManageClass(uid: string, classId: string): Promise<boolean> {
   try {
-    const userDoc = await adminDb.collection("users").doc(uid).get();
-    if (!userDoc.exists) return false;
+    const { data: userDoc, error } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("id", uid)
+      .maybeSingle();
     
-    const userRole = userDoc.data()?.role;
+    if (error || !userDoc) return false;
+    
+    const userRole = userDoc.role;
 
     // Principal has full override access
     if (userRole === "principal") {
@@ -18,14 +23,14 @@ export async function canManageClass(uid: string, classId: string): Promise<bool
 
     // Class Teachers can manage their assigned class
     if (userRole === "class_teacher") {
-      // Query the assignment
-      const assignments = await adminDb.collection("teacher_class_assignments")
-        .where("teacherId", "==", uid)
-        .where("classId", "==", classId)
-        .where("isClassTeacher", "==", true)
-        .get();
+      const { data: assignments } = await supabaseAdmin
+        .from("teacher_class_assignments")
+        .select("id")
+        .eq("teacher_id", uid)
+        .eq("class_id", classId)
+        .eq("is_class_teacher", true);
         
-      if (!assignments.empty) {
+      if (assignments && assignments.length > 0) {
         return true;
       }
     }
@@ -43,12 +48,14 @@ export async function canManageClass(uid: string, classId: string): Promise<bool
  */
 export async function getAssignedClassesForTeacher(uid: string): Promise<string[]> {
   try {
-    const assignments = await adminDb.collection("teacher_class_assignments")
-      .where("teacherId", "==", uid)
-      .where("isClassTeacher", "==", true)
-      .get();
+    const { data: assignments, error } = await supabaseAdmin
+      .from("teacher_class_assignments")
+      .select("class_id")
+      .eq("teacher_id", uid)
+      .eq("is_class_teacher", true);
       
-    return assignments.docs.map(doc => doc.data().classId);
+    if (error || !assignments) return [];
+    return assignments.map((a: any) => a.class_id);
   } catch (error) {
     console.error("Error fetching assigned classes:", error);
     return [];

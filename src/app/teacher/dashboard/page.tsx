@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/lib/supabase/client";
 import { getTeacherClassesServer } from "@/app/actions/classes";
 import { getTeacherScheduleServer, Period } from "@/app/actions/timetable";
 import { getAnnouncementsServer, Announcement } from "@/app/actions/announcements";
 import { Loader2, ChevronRight, CheckSquare, Users, Megaphone, Calendar as TimetableIcon, Settings, GraduationCap, Clock, CalendarIcon, LogOut } from "lucide-react";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 

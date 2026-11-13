@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function saveMarksServer(
@@ -12,30 +12,29 @@ export async function saveMarksServer(
   marksMap: Record<string, number>
 ) {
   try {
-    const userDoc = await adminDb.collection("users").doc(actingUid).get();
-    if (!userDoc.exists || (userDoc.data()?.role !== "teacher" && userDoc.data()?.role !== "class_teacher" && userDoc.data()?.role !== "principal")) {
+    const { data: userDoc } = await supabaseAdmin.from("users").select("role").eq("id", actingUid).maybeSingle();
+    if (!userDoc || !["teacher", "class_teacher", "principal"].includes(userDoc.role)) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const batch = adminDb.batch();
+    const rows = Object.entries(marksMap).map(([studentId, marksObtained]) => ({
+      id: `${classId}_${subjectName.replace(/\s+/g, '')}_${examName.replace(/\s+/g, '')}_${studentId}`,
+      class_id: classId,
+      subject_name: subjectName,
+      exam_name: examName,
+      student_id: studentId,
+      marks_obtained: marksObtained,
+      total_marks: totalMarks,
+      graded_by: actingUid,
+      timestamp: Date.now()
+    }));
 
-    for (const [studentId, marksObtained] of Object.entries(marksMap)) {
-      const docId = `${classId}_${subjectName.replace(/\s+/g, '')}_${examName.replace(/\s+/g, '')}_${studentId}`;
-      const docRef = adminDb.collection("marks_records").doc(docId);
-      
-      batch.set(docRef, {
-        classId,
-        subjectName,
-        examName,
-        studentId,
-        marksObtained,
-        totalMarks,
-        gradedBy: actingUid,
-        timestamp: Date.now()
-      });
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabaseAdmin
+        .from("marks_records")
+        .upsert(rows);
+      if (upsertError) throw upsertError;
     }
-
-    await batch.commit();
 
     revalidatePath("/teacher/marks");
     return { success: true };
@@ -47,19 +46,21 @@ export async function saveMarksServer(
 
 export async function getMarksServer(classId: string, subjectName: string, examName: string) {
   try {
-    const snapshot = await adminDb.collection("marks_records")
-      .where("classId", "==", classId)
-      .where("subjectName", "==", subjectName)
-      .where("examName", "==", examName)
-      .get();
+    const { data, error } = await supabaseAdmin
+      .from("marks_records")
+      .select("*")
+      .eq("class_id", classId)
+      .eq("subject_name", subjectName)
+      .eq("exam_name", examName);
+
+    if (error) throw error;
       
     const records: Record<string, number> = {};
     let totalMarks = 100;
     
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
-      records[data.studentId] = data.marksObtained;
-      if (data.totalMarks) totalMarks = data.totalMarks;
+    (data || []).forEach((row: any) => {
+      records[row.student_id] = row.marks_obtained;
+      if (row.total_marks) totalMarks = row.total_marks;
     });
 
     return { success: true, data: { records, totalMarks } };
@@ -71,16 +72,26 @@ export async function getMarksServer(classId: string, subjectName: string, examN
 
 export async function getStudentMarksServer(studentId: string) {
   try {
-    const snapshot = await adminDb.collection("marks_records")
-      .where("studentId", "==", studentId)
-      .get();
-      
-    const records: any[] = [];
-    snapshot.docs.forEach(doc => {
-      records.push(doc.data());
-    });
+    const { data, error } = await supabaseAdmin
+      .from("marks_records")
+      .select("*")
+      .eq("student_id", studentId);
 
-    return { success: true, data: records };
+    if (error) throw error;
+
+    return { 
+      success: true, 
+      data: (data || []).map((row: any) => ({
+        classId: row.class_id,
+        subjectName: row.subject_name,
+        examName: row.exam_name,
+        studentId: row.student_id,
+        marksObtained: row.marks_obtained,
+        totalMarks: row.total_marks,
+        gradedBy: row.graded_by,
+        timestamp: row.timestamp
+      }))
+    };
   } catch (error: any) {
     console.error("Error fetching student marks:", error);
     return { success: false, error: "Failed to fetch marks." };
@@ -89,16 +100,26 @@ export async function getStudentMarksServer(studentId: string) {
 
 export async function getClassMarksServer(classId: string) {
   try {
-    const snapshot = await adminDb.collection("marks_records")
-      .where("classId", "==", classId)
-      .get();
-      
-    const records: any[] = [];
-    snapshot.docs.forEach(doc => {
-      records.push(doc.data());
-    });
+    const { data, error } = await supabaseAdmin
+      .from("marks_records")
+      .select("*")
+      .eq("class_id", classId);
 
-    return { success: true, data: records };
+    if (error) throw error;
+
+    return { 
+      success: true, 
+      data: (data || []).map((row: any) => ({
+        classId: row.class_id,
+        subjectName: row.subject_name,
+        examName: row.exam_name,
+        studentId: row.student_id,
+        marksObtained: row.marks_obtained,
+        totalMarks: row.total_marks,
+        gradedBy: row.graded_by,
+        timestamp: row.timestamp
+      }))
+    };
   } catch (error: any) {
     console.error("Error fetching class marks:", error);
     return { success: false, error: "Failed to fetch marks." };

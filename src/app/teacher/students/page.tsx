@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { getStudentsServer, createStudentServer } from "@/app/actions/students";
 import { getTeacherClassesServer } from "@/app/actions/classes";
 import { deleteUserServer, updateUserServer } from "@/app/actions/users";
-import { auth } from "@/lib/firebase/config";
-import { UserPlus, Users, Loader2, Trash2, Edit2, X, Save } from "lucide-react";
+import { auth } from "@/lib/supabase/client";
+import { UserPlus, Users, Loader2, Trash2, Edit2, X, Save, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -232,16 +233,39 @@ export default function StudentsPage() {
           <h3 className="text-xl font-semibold flex items-center gap-2">
             <Users className="text-green-500" /> All Students
           </h3>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-600">Filter by Class:</label>
-            <select 
-              value={filterClassId} 
-              onChange={e => setFilterClassId(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600">Filter by Class:</label>
+              <select 
+                value={filterClassId} 
+                onChange={e => setFilterClassId(e.target.value)}
+                className="border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="">All Classes</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.grade} - {c.section}</option>)}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                const headers = ["Admission No", "Roll No", "Full Name", "Email", "Class", "Gender", "Date of Birth", "Parent Name", "Parent Phone"];
+                const rows = filteredStudents.map(s => [
+                  s.admissionNumber || "",
+                  s.rollNumber || "",
+                  s.name || "",
+                  s.email || "",
+                  s.classId || "",
+                  s.gender || "",
+                  s.dateOfBirth || "",
+                  s.parentName || "",
+                  s.parentPhone || ""
+                ]);
+                exportToCsv(filterClassId ? `Students_${filterClassId}` : "My_Students_Roster", headers, rows);
+              }}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold border border-emerald-200 transition-colors"
             >
-              <option value="">All Classes</option>
-              {classes.map(c => <option key={c.id} value={c.id}>{c.grade} - {c.section}</option>)}
-            </select>
+              <Download className="w-3.5 h-3.5" /> Export CSV
+            </button>
           </div>
         </div>
         {filteredStudents.length === 0 ? (

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { getClassesServer } from "@/app/actions/classes";
 import { getTimetableServer, Period, DayTimetable } from "@/app/actions/timetable";
-import { CalendarIcon, Loader2, Clock, User, BookOpen } from "lucide-react";
+import { CalendarIcon, Loader2, Clock, User, BookOpen, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -52,16 +53,51 @@ export default function PrincipalTimetablePage() {
     ? [...timetableMap[selectedDay].periods].sort((a, b) => a.periodNumber - b.periodNumber)
     : [];
 
+  const handleDownloadTimetable = () => {
+    const headers = ["Class", "Day of Week", "Period #", "Timing", "Subject Name", "Faculty / Professor"];
+    const rows: (string | number)[][] = [];
+
+    const selectedClassObj = classes.find(c => c.id === selectedClassId);
+    const className = selectedClassObj ? `${selectedClassObj.grade} - ${selectedClassObj.section}` : selectedClassId;
+
+    DAYS_OF_WEEK.forEach(day => {
+      const dayData = timetableMap[day];
+      if (dayData && dayData.periods) {
+        const sorted = [...dayData.periods].sort((a, b) => a.periodNumber - b.periodNumber);
+        sorted.forEach(p => {
+          rows.push([
+            className,
+            day,
+            p.periodNumber,
+            `${p.startTime} - ${p.endTime}`,
+            p.subjectName,
+            p.teacherName || "Faculty"
+          ]);
+        });
+      }
+    });
+
+    exportToCsv(`Timetable_${selectedClassId || 'Weekly'}`, headers, rows);
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <header className="mb-8 border-b pb-4">
-        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <CalendarIcon className="text-blue-500 w-8 h-8" /> 
-          Class Timetables
-        </h2>
-        <p className="text-gray-600 mt-2">
-          View the weekly schedule for any class across the school.
-        </p>
+      <header className="mb-8 border-b pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <CalendarIcon className="text-blue-500 w-8 h-8" /> 
+            Class Timetables
+          </h2>
+          <p className="text-gray-600 mt-2">
+            View and download the weekly schedule for any class across the college.
+          </p>
+        </div>
+        <button
+          onClick={handleDownloadTimetable}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+        >
+          <Download className="w-4 h-4" /> Export Weekly CSV
+        </button>
       </header>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">

@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from "react";
 import { getStudentsServer } from "@/app/actions/students";
 import { getAttendanceByPeriodServer, markAttendanceServer } from "@/app/actions/attendance";
-import { auth } from "@/lib/firebase/config";
-import { Loader2, Save, Users, CheckCircle, XCircle, Clock, ArrowLeft } from "lucide-react";
+import { auth } from "@/lib/supabase/client";
+import { Loader2, Save, Users, CheckCircle, XCircle, Clock, ArrowLeft, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportUtils";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -233,7 +234,27 @@ function AttendanceManager() {
         )}
         
         {students.length > 0 && (
-          <div className="p-4 bg-gray-50 border-t flex justify-end">
+          <div className="p-4 bg-gray-50 border-t flex flex-wrap justify-between items-center gap-4">
+            <button
+              onClick={() => {
+                const headers = ["Roll No", "Student Name", "Class", "Date", "Period", "Subject", "Status"];
+                const rows = students.map(s => [
+                  s.rollNumber || "",
+                  s.name || "",
+                  classId || "",
+                  selectedDate,
+                  periodNumber,
+                  subjectName || "Subject",
+                  attendance[s.uid] || "Not Marked"
+                ]);
+                exportToCsv(`Attendance_${classId}_p${periodNumber}_${selectedDate}`, headers, rows);
+              }}
+              type="button"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+            >
+              <Download className="w-4 h-4" /> Export Attendance CSV
+            </button>
+
             <button
               onClick={handleSave}
               disabled={saving}

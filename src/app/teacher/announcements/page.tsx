@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getAnnouncementsServer, createAnnouncementServer, deleteAnnouncementServer, Announcement } from "@/app/actions/announcements";
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/supabase/client";
 import { Megaphone, Plus, Loader2, Trash2, Send } from "lucide-react";
 
 export default function TeacherAnnouncementsPage() {
@@ -97,7 +97,7 @@ export default function TeacherAnnouncementsPage() {
           Announcements & Notice Board
         </h2>
         <p className="text-gray-600 mt-2">
-          Read school notices or post updates for your students.
+          Read college notices or post updates for your students.
         </p>
       </header>
 
